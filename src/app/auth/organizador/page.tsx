@@ -40,7 +40,7 @@ export default function Page() {
                                 <input
                                     onChange={handleChange}
                                     type="email"
-                                    className="w-full rounded-lg border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
                                     placeholder="Digite seu e-mail"
                                     required
                                     name='email'
@@ -70,7 +70,7 @@ export default function Page() {
                                     type={showPassword ? "text" : "password"}
                                     name='senha'
                                     onChange={handleChange}
-                                    className="w-full rounded-lg border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
                                     placeholder="Digite sua senha"
                                     minLength={8}
                                     maxLength={8}
