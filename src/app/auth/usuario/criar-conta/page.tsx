@@ -12,7 +12,7 @@ export default function Page() {
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
 
-    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -20,23 +20,23 @@ export default function Page() {
             [name]: value
         }));
     };
-    
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSenhaError(null);
-    
+
         if (!previewSrc) {
             alert("É necessário selecionar uma foto de perfil antes de prosseguir!");
             return;
         }
-    
+
         if (dados.senha !== dados.confirmSenha) {
             setSenhaError('As senhas não correspondem. Por favor, verifique e tente novamente.');
             return;
         }
-    
+
         alert("Cadastro realizado com sucesso!");
-    
+
         setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
         setPreviewSrc(null);
         setSenhaError(null);
@@ -61,23 +61,23 @@ export default function Page() {
             displayPreview(file);
         }
     };
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         const maxFileSize = 10 * 1024 * 1024;
-    
+
         if (!file) return;
-    
+
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
             alert('Formato inválido!\nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
             return;
         }
-    
+
         if (file.size > maxFileSize) {
             alert('Tamanho inválido!\nO tamanho máximo permitido é até 10MB.');
             return;
         }
-    
+
         displayPreview(file);
     };
 
