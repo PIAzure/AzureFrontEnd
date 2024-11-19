@@ -30,7 +30,6 @@ export default function Page() {
             return;
         }
 
-        // Criando o FormData
         const formData = new FormData();
         formData.append('email', dados.email);
         formData.append('name', dados.nome);
@@ -38,27 +37,26 @@ export default function Page() {
         formData.append('isadmin', 'false');
         formData.append('isactive', 'true');
         if (previewSrc) {
-            const file = dataURLtoFile(previewSrc, 'profile-image.png'); // Converter a imagem para um arquivo
+            const file = dataURLtoFile(previewSrc, 'profile-image.png');
             formData.append('imagefield', file);
         }
 
         try {
-            // Enviando a requisição
             const response = await fetch('http://localhost:8000/users/', {
                 method: 'POST',
                 body: formData,
             });
-            console.log(response.status); // Adicione esse log
-if (response.status !== 201) {
-    throw new Error(`Falha ao criar usuário! Código de status: ${response.status}`);
-}
+
+            console.log(response.status);
+            if (response.status !== 201) {
+                throw new Error(`Falha ao criar usuário! Código de status: ${response.status}`);
+            }
 
             if (!response.ok) {
                 throw new Error('Falha ao criar usuário!');
             }
 
             alert("Cadastro realizado com sucesso!");
-            // Limpar campos após o cadastro
             setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
             setPreviewSrc(null);
             setSenhaError(null);
@@ -69,7 +67,6 @@ if (response.status !== 201) {
         }
     };
 
-    // Função para converter base64 (previewSrc) para arquivo
     const dataURLtoFile = (dataurl: string, filename: string) => {
         const arr = dataurl.split(',');
         const mimeMatch = arr[0].match(/:(.*?);/);
