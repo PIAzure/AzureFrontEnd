@@ -7,7 +7,6 @@ export default function Page() {
     const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
-
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -15,8 +14,8 @@ export default function Page() {
             [name]: value
         }));
     };
-    
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSenhaError(null);
 
@@ -65,6 +64,7 @@ export default function Page() {
             console.error("Erro ao enviar dados para o backend", error);
             alert('Erro ao criar o usuário. Tente novamente mais tarde.');
         }
+
     };
 
     const dataURLtoFile = (dataurl: string, filename: string) => {
@@ -101,23 +101,23 @@ export default function Page() {
             displayPreview(file);
         }
     };
-    
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         const maxFileSize = 10 * 1024 * 1024;
-    
+
         if (!file) return;
-    
+
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
             alert('Formato inválido!\nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
             return;
         }
-    
+
         if (file.size > maxFileSize) {
             alert('Tamanho inválido!\nO tamanho máximo permitido é até 10MB.');
             return;
         }
-    
+
         displayPreview(file);
     };
 
