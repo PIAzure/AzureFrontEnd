@@ -4,15 +4,10 @@ import React, { useEffect, useState } from 'react'
 
 export default function Page() {
     const [dados, setDados] = useState({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
-    const [showPassword, setShowPassword] = useState({
-        senha: false,
-        confirmSenha: false
-    });
-
+    const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
 
-    
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -21,28 +16,76 @@ export default function Page() {
         }));
     };
     
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setSenhaError(null);
-    
+
         if (!previewSrc) {
             alert("É necessário selecionar uma foto de perfil antes de prosseguir!");
             return;
         }
-    
+
         if (dados.senha !== dados.confirmSenha) {
             setSenhaError('As senhas não correspondem. Por favor, verifique e tente novamente.');
             return;
         }
-    
-        alert("Cadastro realizado com sucesso!");
-    
-        setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
-        setPreviewSrc(null);
-        setSenhaError(null);
-        setShowPassword({ senha: false, confirmSenha: false });
+
+        // Criando o FormData
+        const formData = new FormData();
+        formData.append('email', dados.email);
+        formData.append('name', dados.nome);
+        formData.append('password', dados.senha);
+        formData.append('isadmin', 'false');
+        formData.append('isactive', 'true');
+        if (previewSrc) {
+            const file = dataURLtoFile(previewSrc, 'profile-image.png'); // Converter a imagem para um arquivo
+            formData.append('imagefield', file);
+        }
+
+        try {
+            // Enviando a requisição
+            const response = await fetch('http://localhost:8000/users/', {
+                method: 'POST',
+                body: formData,
+            });
+            console.log(response.status); // Adicione esse log
+if (response.status !== 201) {
+    throw new Error(`Falha ao criar usuário! Código de status: ${response.status}`);
+}
+
+            if (!response.ok) {
+                throw new Error('Falha ao criar usuário!');
+            }
+
+            alert("Cadastro realizado com sucesso!");
+            // Limpar campos após o cadastro
+            setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
+            setPreviewSrc(null);
+            setSenhaError(null);
+            setShowPassword({ senha: false, confirmSenha: false });
+        } catch (error) {
+            console.error("Erro ao enviar dados para o backend", error);
+            alert('Erro ao criar o usuário. Tente novamente mais tarde.');
+        }
     };
 
+    // Função para converter base64 (previewSrc) para arquivo
+    const dataURLtoFile = (dataurl: string, filename: string) => {
+        const arr = dataurl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        if (!mimeMatch) {
+            throw new Error("Formato de imagem inválido");
+        }
+        const mime = mimeMatch[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    };
+       
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.currentTarget.classList.add("border-indigo-600");
