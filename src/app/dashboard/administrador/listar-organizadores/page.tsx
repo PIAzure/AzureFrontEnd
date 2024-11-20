@@ -7,7 +7,7 @@ export default function Page() {
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold">Bem-vindo à Azure!</h1>
+                    <h1 className="text-lg font-semibold">Página de listagem de Organizadores!</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
