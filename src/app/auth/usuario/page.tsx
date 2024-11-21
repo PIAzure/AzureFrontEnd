@@ -45,6 +45,7 @@ export default function Page() {
             const { Token, user } = await response.json();
             
             localStorage.setItem('authToken', Token.access);
+            localStorage.setItem('user', JSON.stringify(user));
             
             if (user.isadmin) {
                 router.push('/dashboard/administrador');
