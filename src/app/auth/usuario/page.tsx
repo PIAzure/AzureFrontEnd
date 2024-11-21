@@ -42,11 +42,12 @@ export default function Page() {
                 return;
             }
 
-            const { token, isadmin } = await response.json();
-
-            localStorage.setItem('authToken', token);
-
-            if (isadmin) {
+            const { Token, user } = await response.json();
+            
+            localStorage.setItem('authToken', Token.access);
+            localStorage.setItem('user', JSON.stringify(user));
+            
+            if (user.isadmin) {
                 router.push('/dashboard/administrador');
             } else {
                 router.push('/dashboard/usuario');

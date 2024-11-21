@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
     const router = useRouter();
@@ -20,7 +19,6 @@ export default function Page() {
         if (storedUserData) {
             setUserData(JSON.parse(storedUserData));
         }
-
     }, [router]);
 
     const handleLogout = () => {
@@ -29,26 +27,40 @@ export default function Page() {
         router.push('/auth/usuario');
     };
 
+    if (!userData) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <p>Carregando dados do usuário...</p>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex h-screen border border-white">
+        <div className="flex h-screen overflow-hidden border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold">Bem-vindo à Azure!</h1>
+                    <Link href="/dashboard/usuario" passHref>
+                        <div className="flex items-center space-x-2 cursor-pointer">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="h-6 w-6"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                                />
+                            </svg>
+                        </div>
+                    </Link>
+                    <h1 className="text-lg font-semibold">Configurações do Perfil</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
-                                <div className="w-12 h-12 rounded-full overflow-hidden border border-white">
-                                    <Image
-                                        src='/images/usuario1.png'
-                                        alt= "Foto do Usuário"
-                                        width= {48}
-                                        height= {48}
-                                    />
-                                </div>
-                                <div>
-                                    <p className="font-bold text-sm"> {userData?.name || 'Usuário'} </p>
-                                    <p className="text-xs text-gray-300"> {userData?.email || 'email@exemplo.com'} </p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -115,7 +127,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <a
-                                        href="/dashboard/usuario/configuracoes"
+                                        href="/dashboard/administrador/configuracoes"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg
@@ -144,32 +156,42 @@ export default function Page() {
                         </div>
                     </div>
                 </div>
-                <div className="sticky inset-x-0 bottom-0 border-t border-white p-2 text-red-500">
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="group relative flex w-full justify-center space-x-2 rounded-xl px-4 py-2"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 opacity-75"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                        </svg>
-                        <span className="text-sm text-red-500">Sair</span>
-                    </button>
-                </div>
             </div>
 
-            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
+            <div className="flex-1 bg-white text-black pl-64 pr-6 pt-20 overflow-auto" style={{ marginTop: '4rem' }}>
+                <div className="flex justify-center items-center h-full">
+                    <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-gray">
+                        <img
+                            src="/images/usuario1.png"
+                            alt="Usuário"
+                            className="mx-auto h-24 w-24 rounded-full object-cover mb-4"
+                        />
+                        <div>
+                            <p className="font-bold text-sm"> {userData?.name || 'Usuário'} </p>
+                            <p className="text-xs text-gray-300"> {userData?.email || 'email@exemplo.com'} </p>
+                        </div>
+                        
+                        <button
+                            className="mt-4 inline-flex items-center gap-2 rounded-md px-4 py-4 text-sm text-gray-500 hover:text-gray-700 focus:relative border border-dark-gray "
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="1.5"
+                                stroke="currentColor"
+                                className="size-4"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                                />
+                            </svg>
+                            Editar Dados
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     );
