@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image';
 import { IEvent } from '@/utils/interface';
 import { PopUpdate } from './popUpAtualizar';
@@ -105,6 +105,19 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
         setPopUpUpdateEvent(false)
     }
 
+    useEffect(()=>{
+        const user = localStorage.getItem('user');
+        if (user) {
+            console.log('Usuário encontrado no localStorage:', user);
+            const userObj = JSON.parse(user);
+            const email = userObj.email;
+            setEvent((prevEvent) => ({
+                ...prevEvent,
+                organizator: email, // Atualiza o campo específico do estado
+            }));
+        }
+    },[])
+
     return (
         <section className='px-[20px] bg-[#ffffff]'>
             <div className="relative w-full max-w-padrao mx-auto px-padrao">
@@ -181,7 +194,7 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
                             <label htmlFor="descricao_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descrição do evento:</label>
                             <textarea value={event.description} onChange={handleInputChange} name="description" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
-                        <label htmlFor="categoria_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descrição do evento:</label>
+                        {/* <label htmlFor="categoria_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descrição do evento:</label> */}
                         {/* <select name="categoria_evento" className="bg-gray-50 mb-[12px] border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option >Choose a country</option>
                             <option value="US">United States</option>

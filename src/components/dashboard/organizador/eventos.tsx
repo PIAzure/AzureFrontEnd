@@ -41,7 +41,7 @@ export function Eventos() {
             const userObj = JSON.parse(user);
             const email = userObj.email;
             
-            fetch('https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app/events/teste2111@gmail.com/', {
+            fetch('https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app/events//', {
                 headers: {
                     'Accept': 'application/json',
                 },
