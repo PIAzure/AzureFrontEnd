@@ -38,7 +38,7 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
         }
 
         if (evento.banner.includes('/media/banners/')) {
-            const imageUrl = `https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`;
+            const imageUrl = `https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`;
     
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -60,7 +60,7 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
     
     
         try {
-            const response = await fetch(`https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app/events/event/${evento.id}/`, {
+            const response = await fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/event/${evento.id}/`, {
                 method: 'PUT', 
                 body: formData,
             });

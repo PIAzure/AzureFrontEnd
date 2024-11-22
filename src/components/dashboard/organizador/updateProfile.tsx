@@ -2,16 +2,18 @@ import React, { useEffect, useState } from 'react'
 import Image from 'next/image';
 import { IEvent } from '@/utils/interface';
 import { PopUpRegisterEvent } from './popUpRegisterEvent';
+import { PopUpUpdateProfile } from './popUpUpdateProfile';
 // import CronogramaModal from './escala';
 interface IProps {
     isOpen: Function
 }
 export function UpdateProfile({ isOpen }: IProps) {
-    const [dados, setDados] = useState({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
+    const [dados, setDados] = useState({ nome: '', senha: '', email: '', confirmSenha: '', foto: '' });
     const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
     const [sucess, setSuccess] = useState(false)
+    const [popUppdateProfile, setPopUpUpdateProfile] = useState(false)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -35,7 +37,6 @@ export function UpdateProfile({ isOpen }: IProps) {
         }
 
         const formData = new FormData();
-        formData.append('email', dados.email);
         formData.append('name', dados.nome);
         formData.append('password', dados.senha);
         formData.append('isadmin', 'false');
@@ -126,12 +127,25 @@ export function UpdateProfile({ isOpen }: IProps) {
         reader.readAsDataURL(file);
         reader.onload = () => {
             setPreviewSrc(reader.result as string);
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                'foto': reader.result as string, // Atualiza o campo específico do estado
+            }));
         };
     };
 
     useEffect(() => {
-        console.log(dados)
-    }, [dados])
+        const user = localStorage.getItem('user');
+        if (user) {
+            console.log('Usuário encontrado no localStorage:', user);
+            const userObj = JSON.parse(user);
+            const email = userObj.email;
+            setDados((prevDados) => ({
+                ...prevDados,
+                'email': email
+            }));
+        }
+    }, [])
 
     useEffect(() => {
         const user = localStorage.getItem('user');
@@ -141,10 +155,31 @@ export function UpdateProfile({ isOpen }: IProps) {
             const email = userObj.email;
             setDados((prevEvent) => ({
                 ...prevEvent,
-                organizator: email, // Atualiza o campo específico do estado
+                foto: `https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`, // Atualiza o campo específico do estado
+            }));
+            setPreviewSrc(`https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`)
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                nome: userObj.name, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                email: email, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                senha: userObj.password, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                confirmSenha: userObj.password, // Atualiza o campo específico do estado
             }));
         }
-    },[])
+    }, [])
+
+    function isOpenUpdateCadastro() {
+        setPopUpUpdateProfile(false)
+    }
 
     return (
         <section className='px-[20px] bg-[#ffffff]'>
@@ -163,12 +198,12 @@ export function UpdateProfile({ isOpen }: IProps) {
                     </svg>
                 </div>
                 <div className="w-full max-w-lg">
-                    <h1 className="text-2xl font-bold text-indigo-600 sm:text-3xl">Edite seu evento</h1>
+                    <h1 className="text-2xl font-bold text-indigo-600 sm:text-3xl">Edite sua conta</h1>
 
                     <p className="mb-[32px] max-w-md text-gray-500">
                         Preencha corretamente todos os campos.
                     </p>
-                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4" onSubmit={handleSubmit}>
+                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4" onSubmit={(e)=>{e.preventDefault()}}>
                         <div
                             className="w-full max-w-[400px] relative border-2 border-gray-300 border-dashed rounded-lg p-6"
                             id="dropzone"
@@ -241,36 +276,6 @@ export function UpdateProfile({ isOpen }: IProps) {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                     </svg>
 
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="sr-only">Email</label>
-                            <div className="relative">
-                                <input
-                                    onChange={handleChange}
-                                    type="email"
-                                    className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
-                                    value={dados.email}
-                                    placeholder="Digite seu e-mail"
-                                    required
-                                    name='email'
-                                />
-                                <span className="absolute inset-y-0 end-0 grid place-content-center px-4">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="size-4 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                        />
-                                    </svg>
                                 </span>
                             </div>
                         </div>
@@ -403,7 +408,7 @@ export function UpdateProfile({ isOpen }: IProps) {
                         {senhaError && <p className="text-red-500 text-sm">{senhaError}</p>}
                         <div className="flex items-center justify-between">
                             <button
-                                type="submit"
+                                onClick={()=>{setPopUpUpdateProfile(true)}}
                                 className="inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white"
                             >
                                 Atualizar
@@ -412,11 +417,16 @@ export function UpdateProfile({ isOpen }: IProps) {
                     </form>
                 </div>
             </div>
-            {/* {
-                popUppdateEvent ?
-                    <UpdateProfile isOpen={isOpenUpdateCadastro} evento={event} previewSrc={previewSrc} />
+            {
+                popUppdateProfile ?
+                    <PopUpUpdateProfile isOpen={isOpenUpdateCadastro} user={{
+                        nome: dados.nome,
+                        senha: dados.senha,
+                        foto: dados.foto,
+                        email: dados.email
+                    }} previewSrc={previewSrc} />
                     : null
-            } */}
+            }
         </section>
     )
 }

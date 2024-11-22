@@ -299,7 +299,7 @@ export function FormCadastraEvento({ isOpen }: IProps) {
                     </svg>
                 </div>
                 <div className="w-full max-w-lg">
-                    <h1 className="text-2xl font-bold text-indigo-600 sm:text-3xl">Edite seu evento</h1>
+                    <h1 className="text-2xl font-bold text-indigo-600 sm:text-3xl">Crie seu evento</h1>
 
                     <p className="mb-[32px] max-w-md text-gray-500">
                         Preencha corretamente todos os campos.
@@ -379,7 +379,7 @@ export function FormCadastraEvento({ isOpen }: IProps) {
                         <input  type="date" name="termino_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                     </div> */}
                         <div onClick={() => { setPopUpUpdateEvent(true) }} className="w-[48%] text-center text-16px cursor-pointer inline-block rounded bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">
-                            Atualizar
+                            Criar evento
                         </div>
                     </form>
                 </div>

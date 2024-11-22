@@ -7,7 +7,7 @@ import { PopUpDelete } from './popUpDelete';
 
 export function Eventos() {
     const [popUpDelete, setDelete] = useState(false)
-    const urlBE = 'https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app'
+    const urlBE = 'https://5ccb-200-134-81-82.ngrok-free.app'
     const [eventoSelecionado, setEvento] = useState<IEvent | null>(null)
     const [formCadastro, setFormCadastro] = useState(false);
     const [updateCadastro, setUpdateCadastro] = useState(false);
@@ -41,7 +41,7 @@ export function Eventos() {
             const userObj = JSON.parse(user);
             const email = userObj.email;
             
-            fetch('https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app/events//', {
+            fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/${email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },

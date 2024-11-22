@@ -15,7 +15,7 @@ export default function Page() {
             <SideMenu changeChild={changeChild} />
             {
                 defaultChild == 'Eventos' ?
-                    <Eventos/> :
+                    <Eventos /> :
                     defaultChild == 'Configurações' ? <Config /> :
                         null
             }

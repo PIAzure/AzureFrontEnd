@@ -39,7 +39,7 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
             }
 
             if (evento.banner.includes('/media/banners/')) {
-                const imageUrl = `https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`;
+                const imageUrl = `https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`;
 
                 try {
                     const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -61,8 +61,8 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
 
 
             try {
-                const response = await fetch(`https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app/events/event/${evento.id}/`, {
-                    method: 'PUT',
+                const response = await fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/`, {
+                    method: 'POST',
                     body: formData,
                 });
 
@@ -99,7 +99,7 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
 
                     <div className="p-3 mt-2 text-center space-x-4 md:block">
                         <div onClick={() => { createEvent() }} className='inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
-                            Atualizar
+                            Criar
                         </div>
                     </div>
                 </div>

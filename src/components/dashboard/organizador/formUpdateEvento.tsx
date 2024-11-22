@@ -12,12 +12,12 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
         description: evento?.description,
         location: evento.location,
         timeDate: evento.timeDate,
-        banner: `https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`,
+        banner: `https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`,
         organizator: "teste2111@gmail.com",
         id: evento.id,
     });
     const [listaCronograma, setListaCronograma] = useState();
-    const [previewSrc, setPreviewSrc] = useState<string | null>(`https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`);
+    const [previewSrc, setPreviewSrc] = useState<string | null>(`https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`);
 
     const dataURLtoFile = (dataurl: string, filename: string) => {
         const arr = dataurl.split(',');
