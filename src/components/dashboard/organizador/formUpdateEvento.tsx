@@ -1,11 +1,39 @@
 import React, { useState } from 'react'
 import Image from 'next/image';
-interface IProps{
-    isOpen:Function
+import { IEvent } from '@/utils/interface';
+import { PopUpdate } from './popUpAtualizar';
+interface IProps {
+    isOpen: Function
+    evento: IEvent
 }
-export function FormUpdateEvento({isOpen}:IProps) {
+export function FormUpdateEvento({ isOpen, evento }: IProps) {
+    const [popUppdateEvent, setPopUpUpdateEvent] = useState(false)
+    const [event, setEvent] = useState<IEvent>({
+        description: evento?.description,
+        location: evento.location,
+        timeDate: evento.timeDate,
+        banner: `https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`,
+        organizator: "teste2111@gmail.com",
+        id: evento.id,
+    });
     const [listaCronograma, setListaCronograma] = useState();
-    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+    const [previewSrc, setPreviewSrc] = useState<string | null>(`https://3ed8-2804-828-f230-1639-a30c-b8a1-fc45-378.ngrok-free.app${evento.banner}`);
+
+    const dataURLtoFile = (dataurl: string, filename: string) => {
+        const arr = dataurl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        if (!mimeMatch) {
+            throw new Error("Formato de imagem inválido");
+        }
+        const mime = mimeMatch[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -28,9 +56,25 @@ export function FormUpdateEvento({isOpen}:IProps) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            displayPreview(file);
+        const maxFileSize = 10 * 1024 * 1024;
+
+        if (!file) return;
+
+        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+            alert('Formato inválido!/nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
+            return;
         }
+
+        if (file.size > maxFileSize) {
+            alert('Tamanho inválido!/nO tamanho máximo permitido é até 10MB.');
+            return;
+        }
+
+        displayPreview(file);
+    };
+
+    const handleRemoveImage = () => {
+        setPreviewSrc(null);
     };
 
     const displayPreview = (file: File) => {
@@ -38,12 +82,33 @@ export function FormUpdateEvento({isOpen}:IProps) {
         reader.readAsDataURL(file);
         reader.onload = () => {
             setPreviewSrc(reader.result as string);
+            setEvent((prevEvent) => ({
+                ...prevEvent,
+                'banner': reader.result as string, // Atualiza o campo específico do estado
+            }));
         };
     };
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setEvent((prevEvent) => ({
+            ...prevEvent,
+            [name]: value, // Atualiza o campo específico do estado
+        }));
+    };
+
+    function dataInput(date: string) {
+        const formattedDate = new Date(date).toISOString().split('T')[0];
+        return formattedDate
+    }
+
+    function isOpenUpdateCadastro() {
+        setPopUpUpdateEvent(false)
+    }
+
     return (
         <section className='px-[20px] bg-[#ffffff]'>
-            <div className="relative w-full max-w-padrao px-padrao">
-                <div onClick={()=>{isOpen()}} className='absolute top-[0px] right-[0px] border hover:cursor-pointer'>
+            <div className="relative w-full max-w-padrao mx-auto px-padrao">
+                <div onClick={() => { isOpen() }} className='absolute top-[0px] right-[0px] border hover:cursor-pointer'>
                     <svg
                         className="h-6 w-6"
                         fill="none"
@@ -108,37 +173,45 @@ export function FormUpdateEvento({isOpen}:IProps) {
                                 />
                             )}
                         </div>
-                        <div className='mb-[12px]'>
+                        {/* <div className='mb-[12px]'>
                             <label htmlFor="nome_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Nome do evento:</label>
-                            <input type="text" id="nome_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
-                        </div>
+                            <input type="text" name="nome_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div> */}
                         <div className='mb-[12px]'>
                             <label htmlFor="descricao_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descrição do evento:</label>
-                            <textarea id="descricao_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <textarea value={event.description} onChange={handleInputChange} name="description" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
                         <label htmlFor="categoria_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Descrição do evento:</label>
-                        <select id="categoria_evento" className="bg-gray-50 mb-[12px] border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                        {/* <select name="categoria_evento" className="bg-gray-50 mb-[12px] border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                             <option >Choose a country</option>
                             <option value="US">United States</option>
                             <option value="CA">Canada</option>
                             <option value="FR">France</option>
                             <option value="DE">Germany</option>
-                        </select>
+                        </select> */}
                         <div className='mb-[12px]'>
                             <label htmlFor="localizacao_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Localização do evento:</label>
-                            <input type="text" id="localizacao_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <input value={event.location} onChange={handleInputChange} type="text" name="location" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
                         <div className='mb-[12px]'>
                             <label htmlFor="data_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Data do evento:</label>
-                            <input type="date" id="data_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <input value={dataInput(event.timeDate)} onChange={handleInputChange} type="date" name="timeDate" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
-                        <div className='mb-[12px]'>
+                        {/* <div className='mb-[12px]'>
                             <label htmlFor="termino_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Termino do evento:</label>
-                            <input type="date" id="termino_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <input  type="date" name="termino_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div> */}
+                        <div onClick={() => { setPopUpUpdateEvent(true) }} className="w-[48%] text-center text-16px cursor-pointer inline-block rounded bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">
+                            Atualizar
                         </div>
                     </form>
                 </div>
             </div>
+            {
+                popUppdateEvent ?
+                    <PopUpdate isOpen={isOpenUpdateCadastro} evento={event} previewSrc={previewSrc} />
+                    : null
+            }
         </section>
     )
 }

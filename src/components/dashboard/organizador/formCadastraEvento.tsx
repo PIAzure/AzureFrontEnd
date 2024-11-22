@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Image from 'next/image';
-import { IEscala } from '@/utils/interface';
+import { IEscala, IEvent } from '@/utils/interface';
 import CronogramaModal from './escala';
 interface IProps {
     isOpen: Function
@@ -8,6 +8,13 @@ interface IProps {
 export function FormCadastraEvento({ isOpen }: IProps) {
     const [listaCronograma, setListaCronograma] = useState<IEscala[]>([
     ]);
+    const [event, setEvent] = useState<Partial<IEvent>>({
+        description: '',
+        location: '',
+        timeDate: '',
+        banner: '',
+        organizator: ''
+    });
     const [showModal, setShowModal] = useState(false);
 
     const handleAddCronograma = (data: { data: string; qtdeVoluntarios: number; comeco: string; fim: string }) => {

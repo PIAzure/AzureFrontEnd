@@ -1,10 +1,14 @@
 'use client'
+import { PopUpRegister } from '@/components/dashboard/organizador/popUpRegister';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react'
 
 export default function Page() {
     const [dados, setDados] = useState({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
-    const [showPassword, setShowPassword] = useState(false);
+    const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
+    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+    const [senhaError, setSenhaError] = useState<string | null>(null);
+    const [sucess, setSuccess] = useState(false)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -12,7 +16,65 @@ export default function Page() {
             [name]: value
         }));
     };
-    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setSenhaError(null);
+
+        if (!previewSrc) {
+            alert("É necessário selecionar uma foto de perfil antes de prosseguir!");
+            return;
+        }
+
+        if (dados.senha !== dados.confirmSenha) {
+            setSenhaError('As senhas não correspondem. Por favor, verifique e tente novamente.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('email', dados.email);
+        formData.append('name', dados.nome);
+        formData.append('password', dados.senha);
+        formData.append('isadmin', 'false');
+        formData.append('isactive', 'true');
+        if (previewSrc) {
+            const file = dataURLtoFile(previewSrc, 'profile-image.png');
+            formData.append('imagefield', file);
+        }
+
+        try {
+            const response = await fetch('/api/organizador/register/', {
+                method: 'POST',
+                body: formData,
+            });
+
+            setSuccess(true)
+            setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
+            setPreviewSrc(null);
+            setSenhaError(null);
+            setShowPassword({ senha: false, confirmSenha: false });
+        } catch (error) {
+            console.error("Erro ao enviar dados para o backend", error);
+            alert('Erro ao criar o usuário. Tente novamente mais tarde.');
+        }
+
+    };
+
+    const dataURLtoFile = (dataurl: string, filename: string) => {
+        const arr = dataurl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        if (!mimeMatch) {
+            throw new Error("Formato de imagem inválido");
+        }
+        const mime = mimeMatch[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -35,9 +97,25 @@ export default function Page() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            displayPreview(file);
+        const maxFileSize = 10 * 1024 * 1024;
+
+        if (!file) return;
+
+        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+            alert('Formato inválido!/nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
+            return;
         }
+
+        if (file.size > maxFileSize) {
+            alert('Tamanho inválido!/nO tamanho máximo permitido é até 10MB.');
+            return;
+        }
+
+        displayPreview(file);
+    };
+
+    const handleRemoveImage = () => {
+        setPreviewSrc(null);
     };
 
     const displayPreview = (file: File) => {
@@ -56,18 +134,17 @@ export default function Page() {
             <section className="relative flex flex-wrap lg:min-h-screen">
                 <div className="w-full  py-[30px] md:py-[60px] lg:w-1/2 px-padrao">
                     <div className="mx-auto max-w-lg">
-                        <div className='relative w-full mb-24px md:mb-32px'>
-                            <Image className='object-contain object-left' src={'/images/logo_sem_fundo.png'} fill alt='logo Azure' />
+                        <div className='relative w-full h-[90px] mb-24px md:mb-32px'>
+                            <Image className='object-contain object-left' src={'/images/logo_sem_fundo.png'} fill alt='Logo Azure' />
                         </div>
-                        <h1 className="text-28px md:text-32px lg:text-32px">Bem-vindo de volta à Azure!</h1>
+                        <h1 className="text-28px md:text-32px lg:text-32px">Cadastre-se na Azure</h1>
 
                         <p className="mt-4 text-gray-500 max-w-[450px]">
-                            Crie e gerencie seus eventos de forma simples e eficiente!
-                            Faça login para organizar seus eventos, montar sua lista de participantes e recrutar voluntários.
+                            Seu evento tem uma maior visibilidade em nossa plataforma.
                         </p>
                     </div>
 
-                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4">
+                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4" onSubmit={handleSubmit}>
                         <div
                             className="w-full max-w-[400px] relative border-2 border-gray-300 border-dashed rounded-lg p-6"
                             id="dropzone"
@@ -81,24 +158,24 @@ export default function Page() {
                                 onChange={handleFileChange}
                             />
                             {
-                                previewSrc? null:
-                                <div className="text-center">
-                                <Image
-                                    className="mx-auto h-12 w-12"
-                                    src="https://www.svgrepo.com/show/357902/image-upload.svg"
-                                    alt="Upload Icon"
-                                    width={48}
-                                    height={48}
-                                />
-                                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                                    <label htmlFor="file-upload" className="relative cursor-pointer">
-                                        <span>Drag and drop</span>
-                                        <span className="text-indigo-600"> or browse</span>
-                                        <span> to upload</span>
-                                    </label>
-                                </h3>
-                                <p className="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-                            </div>
+                                previewSrc ? null :
+                                    <div className="text-center">
+                                        <Image
+                                            className="mx-auto h-12 w-12"
+                                            src="https://www.svgrepo.com/show/357902/image-upload.svg"
+                                            alt="Upload Icon"
+                                            width={48}
+                                            height={48}
+                                        />
+                                        <h3 className="mt-2 text-sm font-medium text-gray-900">
+                                            <label htmlFor="file-upload" className="relative cursor-pointer">
+                                                <span> Arraste e solte</span>
+                                                <span className="text-indigo-600"> ou navegue até o arquivo</span>
+                                                <span> para fazer upload da sua foto de perfil</span>
+                                            </label>
+                                        </h3>
+                                        <p className="mt-1 text-xs text-gray-500">PNG, JPEG ou GIF até 10MB</p>
+                                    </div>
                             }
 
                             {previewSrc && (
@@ -111,13 +188,25 @@ export default function Page() {
                                 />
                             )}
                         </div>
+                        {previewSrc && (
+                            <div className="flex justify-start mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveImage}
+                                    className="inline-block rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white"
+                                >
+                                    Remover
+                                </button>
+                            </div>
+                        )}
                         <div>
-                            <label htmlFor="email" className="sr-only">Nome</label>
+                            <label htmlFor="Nome" className="sr-only">Nome</label>
                             <div className="relative">
                                 <input
                                     onChange={handleChange}
                                     type="text"
                                     className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    value={dados.nome}
                                     placeholder="Digite seu nome completo"
                                     required
                                     minLength={8}
@@ -138,6 +227,7 @@ export default function Page() {
                                     onChange={handleChange}
                                     type="email"
                                     className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    value={dados.email}
                                     placeholder="Digite seu e-mail"
                                     required
                                     name='email'
@@ -164,10 +254,11 @@ export default function Page() {
                             <label htmlFor="password" className="sr-only">Senha</label>
                             <div className="relative">
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showPassword.senha ? "text" : "password"}
                                     name='senha'
                                     onChange={handleChange}
                                     className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    value={dados.senha}
                                     placeholder="Digite sua senha"
                                     minLength={8}
                                     maxLength={8}
@@ -175,9 +266,9 @@ export default function Page() {
                                 />
                                 <span
                                     className="absolute inset-y-0 end-0 grid place-content-center px-4"
-                                    onClick={() => setShowPassword(!showPassword)}>
+                                    onClick={() => setShowPassword({ ...showPassword, senha: !showPassword.senha })}>
 
-                                    {showPassword ? (
+                                    {showPassword.senha ? (
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             className="size-4 text-gray-400"
@@ -226,10 +317,11 @@ export default function Page() {
                             <label htmlFor="password" className="sr-only">Senha</label>
                             <div className="relative">
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type={showPassword.confirmSenha ? "text" : "password"}
                                     name='confirmSenha'
                                     onChange={handleChange}
                                     className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
+                                    value={dados.confirmSenha}
                                     placeholder="Confirme sua senha"
                                     minLength={8}
                                     maxLength={8}
@@ -237,9 +329,9 @@ export default function Page() {
                                 />
                                 <span
                                     className="absolute inset-y-0 end-0 grid place-content-center px-4"
-                                    onClick={() => setShowPassword(!showPassword)}>
+                                    onClick={() => setShowPassword({ ...showPassword, confirmSenha: !showPassword.confirmSenha })}>
 
-                                    {showPassword ? (
+                                    {showPassword.confirmSenha ? (
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
                                             className="size-4 text-gray-400"
@@ -284,12 +376,12 @@ export default function Page() {
                                 </span>
                             </div>
                         </div>
+                        {senhaError && <p className="text-red-500 text-sm">{senhaError}</p>}
                         <div className="flex items-center justify-between">
                             <p className="text-sm text-gray-500">
                                 Já possuí conta?{' '}
-                                <a className="underline hover:text-cian" href="/auth/organizador/">login</a>
+                                <a className="underline hover:text-cian" href="/auth/organizador/">Entrar</a>
                             </p>
-
                             <button
                                 type="submit"
                                 className="inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white"
@@ -300,9 +392,12 @@ export default function Page() {
                     </form>
                 </div>
                 <div className="relative order-first w-full  lg:w-1/2">
-                    <Image className='object-cover' src={'/images/palestra.jpg'} fill alt='imagem de palestra' />
+                    <Image className='object-cover' src={'/images/palestra.jpg'} fill alt='imagem de palestrante em um evento' />
                 </div>
             </section>
+            {
+                sucess ? <PopUpRegister /> : null
+            }
         </main>
     )
 }
