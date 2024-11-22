@@ -29,7 +29,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://localhost:8000/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -57,6 +57,9 @@ export default function Page() {
             setCurrentPage(newPage);
         }
     };
+
+    const baseUrl = "http://localhost:8000";
+    //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (
         <div className="flex h-screen border border-white">
@@ -191,15 +194,15 @@ export default function Page() {
                     <>
                         <div className="p-8">
                             <div className="grid grid-cols-3 grid-rows-2 gap-4">
-                                {currentEvents.map((event: any, index: number) => (
+                                {currentEvents.map((event: any) => (
                                     <a
-                                        key={index}
+                                        key={event.id}
                                         href="#"
                                         className="group relative block overflow-hidden border border-gray-200 rounded-lg border border-gray bg-cian"
                                         style={{ maxWidth: '300px',height: '300px'}}
                                     >   
                                         <img
-                                            src={event.banner || " https://images.unsplash.com/photo-1498353430211-35e63516f347"}
+                                            src={event.banner ? `${baseUrl}${event.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347"}
                                             alt="Banner do Evento"
                                             className="h-32 w-full object-cover transition duration-500 group-hover:scale-105"
                                         />
