@@ -1,14 +1,19 @@
-'use client'
-import { PopUpRegister } from '@/components/dashboard/organizador/popUpRegister';
-import Image from 'next/image';
 import React, { useEffect, useState } from 'react'
-
-export default function Page() {
-    const [dados, setDados] = useState({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
+import Image from 'next/image';
+import { IEvent } from '@/utils/interface';
+import { PopUpRegisterEvent } from './popUpRegisterEvent';
+import { PopUpUpdateProfile } from './popUpUpdateProfile';
+// import CronogramaModal from './escala';
+interface IProps {
+    isOpen: Function
+}
+export function UpdateProfile({ isOpen }: IProps) {
+    const [dados, setDados] = useState({ nome: '', senha: '', email: '', confirmSenha: '', foto: '' });
     const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
     const [sucess, setSuccess] = useState(false)
+    const [popUppdateProfile, setPopUpUpdateProfile] = useState(false)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -32,7 +37,6 @@ export default function Page() {
         }
 
         const formData = new FormData();
-        formData.append('email', dados.email);
         formData.append('name', dados.nome);
         formData.append('password', dados.senha);
         formData.append('isadmin', 'false');
@@ -123,28 +127,83 @@ export default function Page() {
         reader.readAsDataURL(file);
         reader.onload = () => {
             setPreviewSrc(reader.result as string);
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                'foto': reader.result as string, // Atualiza o campo específico do estado
+            }));
         };
     };
 
     useEffect(() => {
-        console.log(dados)
-    }, [dados])
+        const user = localStorage.getItem('user');
+        if (user) {
+            console.log('Usuário encontrado no localStorage:', user);
+            const userObj = JSON.parse(user);
+            const email = userObj.email;
+            setDados((prevDados) => ({
+                ...prevDados,
+                'email': email
+            }));
+        }
+    }, [])
+
+    useEffect(() => {
+        const user = localStorage.getItem('user');
+        if (user) {
+            console.log('Usuário encontrado no localStorage:', user);
+            const userObj = JSON.parse(user);
+            const email = userObj.email;
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                foto: `https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`, // Atualiza o campo específico do estado
+            }));
+            setPreviewSrc(`https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`)
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                nome: userObj.name, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                email: email, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                senha: userObj.password, // Atualiza o campo específico do estado
+            }));
+            setDados((prevEvent) => ({
+                ...prevEvent,
+                confirmSenha: userObj.password, // Atualiza o campo específico do estado
+            }));
+        }
+    }, [])
+
+    function isOpenUpdateCadastro() {
+        setPopUpUpdateProfile(false)
+    }
+
     return (
-        <main>
-            <section className="relative flex flex-wrap lg:min-h-screen">
-                <div className="w-full  py-[30px] md:py-[60px] lg:w-1/2 px-padrao">
-                    <div className="mx-auto max-w-lg">
-                        <div className='relative w-full h-[90px] mb-24px md:mb-32px'>
-                            <Image className='object-contain object-left' src={'/images/logo_sem_fundo.png'} fill alt='Logo Azure' />
-                        </div>
-                        <h1 className="text-28px md:text-32px lg:text-32px">Cadastre-se na Azure</h1>
+        <section className='px-[20px] bg-[#ffffff]'>
+            <div className="relative w-full max-w-padrao mx-auto px-padrao">
+                <div onClick={() => { isOpen() }} className='absolute top-[0px] right-[0px] border hover:cursor-pointer'>
+                    <svg
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </div>
+                <div className="w-full max-w-lg">
+                    <h1 className="text-2xl font-bold text-indigo-600 sm:text-3xl">Edite sua conta</h1>
 
-                        <p className="mt-4 text-gray-500 max-w-[450px]">
-                            Seu evento tem uma maior visibilidade em nossa plataforma.
-                        </p>
-                    </div>
-
-                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4" onSubmit={handleSubmit}>
+                    <p className="mb-[32px] max-w-md text-gray-500">
+                        Preencha corretamente todos os campos.
+                    </p>
+                    <form action="#" className="mx-auto mb-0 mt-8 max-w-lg space-y-4" onSubmit={(e)=>{e.preventDefault()}}>
                         <div
                             className="w-full max-w-[400px] relative border-2 border-gray-300 border-dashed rounded-lg p-6"
                             id="dropzone"
@@ -217,36 +276,6 @@ export default function Page() {
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                     </svg>
 
-                                </span>
-                            </div>
-                        </div>
-                        <div>
-                            <label htmlFor="email" className="sr-only">Email</label>
-                            <div className="relative">
-                                <input
-                                    onChange={handleChange}
-                                    type="email"
-                                    className="w-full rounded-lg border border-gray-200 p-4 pe-12 text-sm shadow-sm"
-                                    value={dados.email}
-                                    placeholder="Digite seu e-mail"
-                                    required
-                                    name='email'
-                                />
-                                <span className="absolute inset-y-0 end-0 grid place-content-center px-4">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="size-4 text-gray-400"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth="2"
-                                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
-                                        />
-                                    </svg>
                                 </span>
                             </div>
                         </div>
@@ -378,26 +407,26 @@ export default function Page() {
                         </div>
                         {senhaError && <p className="text-red-500 text-sm">{senhaError}</p>}
                         <div className="flex items-center justify-between">
-                            <p className="text-sm text-gray-500">
-                                Já possuí conta?{' '}
-                                <a className="underline hover:text-cian" href="/auth/organizador/">Entrar</a>
-                            </p>
                             <button
-                                type="submit"
+                                onClick={()=>{setPopUpUpdateProfile(true)}}
                                 className="inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white"
                             >
-                                Cadastrar-se
+                                Atualizar
                             </button>
                         </div>
                     </form>
                 </div>
-                <div className="relative order-first w-full  lg:w-1/2">
-                    <Image className='object-cover' src={'/images/palestra.jpg'} fill alt='imagem de palestrante em um evento' />
-                </div>
-            </section>
+            </div>
             {
-                sucess ? <PopUpRegister /> : null
+                popUppdateProfile ?
+                    <PopUpUpdateProfile isOpen={isOpenUpdateCadastro} user={{
+                        nome: dados.nome,
+                        senha: dados.senha,
+                        foto: dados.foto,
+                        email: dados.email
+                    }} previewSrc={previewSrc} />
+                    : null
             }
-        </main>
+        </section>
     )
 }
