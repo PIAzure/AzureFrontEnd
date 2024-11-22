@@ -1,39 +1,147 @@
 'use client';
 import Image from 'next/image';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Page() {
-    const [userData, setUserData] = useState<any>(null);
+    const [dados, setDados] = useState({ name: '',email:'', password: '', confirmSenha: '', imagefield: '' });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState({ password: false, confirmSenha: false });
+    const [previewSrc, setPreviewSrc] = useState<string | null>(null);
+    const [senhaError, setSenhaError] = useState<string | null>(null);
     const router = useRouter();
 
-    useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            router.push('/auth/usuario');
+    const token = localStorage.getItem('authToken');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const email = user?.email;
+    
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setDados((prevDados) => ({
+          ...prevDados,
+          [name]: value,
+        }));
+      };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        const maxFileSize = 10 * 1024 * 1024;
+    
+        if (!file) return;
+    
+        if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+          alert('Formato inválido!\nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
+          return;
+        }
+    
+        if (file.size > maxFileSize) {
+          alert('Tamanho inválido!\nO tamanho máximo permitido é até 10MB.');
+          return;
+        }
+    
+        displayPreview(file);
+    };
+
+    const displayPreview = (file: File) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          setPreviewSrc(reader.result as string);
+        };
+    };
+
+    const handleRemoveImage = () => {
+        setPreviewSrc(null);
+    };
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setSenhaError(null);
+
+        if (!previewSrc) {
+            alert("É necessário selecionar uma foto de perfil antes de prosseguir!");
             return;
         }
 
-        const storedUserData = localStorage.getItem('user');
-        if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
+        if (dados.password !== dados.confirmSenha) {
+            setSenhaError('As senhas não correspondem. Por favor, verifique e tente novamente.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', dados.name);
+        formData.append('password', dados.password);
+        formData.append('isadmin', 'true');
+        formData.append('isactive', 'true');
+        if (previewSrc) {
+            const file = dataURLtoFile(previewSrc, 'profile-image.png');
+            formData.append('imagefield', file);
+        }
+
+        try {
+            const url = `http://localhost:8000/users/${email}/`;
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            if (response.status !== 200) {
+                throw new Error(`Falha ao atualizar usuário! Código de status: ${response.status}`);
+            }
+
+            setIsModalOpen(false);
+            alert("Alteração realizada com sucesso!");
+            
+            setPreviewSrc(null);
+            setSenhaError(null);
+            setShowPassword({ password: false, confirmSenha: false });
+
+        } catch (error) {
+            console.error("Erro ao enviar dados para o backend", error);
+            alert('Erro ao atualizar o usuário. Tente novamente mais tarde.');
+        }
+    };
+
+    const dataURLtoFile = (dataurl: string, filename: string) => {
+        const arr = dataurl.split(',');
+        const mimeMatch = arr[0].match(/:(.*?);/);
+        if (!mimeMatch) {
+            throw new Error("Formato de imagem inválido");
+        }
+        const mime = mimeMatch[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new File([u8arr], filename, { type: mime });
+    };
+
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                router.push('/auth/administrador');
+                return;
+            }
+
+            const storedUserData = localStorage.getItem('user');
+            if (storedUserData) {
+                const user = JSON.parse(storedUserData);
+                setDados(user);
+                setPreviewSrc(user.image);
+            }
         }
     }, [router]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        router.push('/auth/usuario');
-    };
-
-    if (!userData) {
-        return (
-            <div className="flex justify-center items-center h-screen">
-                <p>Carregando dados do usuário...</p>
-            </div>
-        );
-    }
+    const handleEditClick = () => setIsModalOpen(true);
+    const handleCloseModal = () => setIsModalOpen(false);
 
     return (
         <div className="flex h-screen overflow-hidden border border-white">
@@ -156,12 +264,13 @@ export default function Page() {
                             className="mx-auto h-24 w-24 rounded-full object-cover mb-4"
                         />
                         <div>
-                            <p className="font-bold text-sm"> {userData?.name || 'Usuário'} </p>
-                            <p className="text-xs text-gray-300"> {userData?.email || 'email@exemplo.com'} </p>
+                            <p className="font-bold text-sm"> {dados?.name || 'Administrador'} </p>
+                            <p className="text-xs text-gray-300"> {dados?.email || 'email@exemplo.com'} </p>
                         </div>
                         
                         <button
                             className="mt-4 inline-flex items-center gap-2 rounded-md px-4 py-4 text-sm text-gray-500 hover:text-gray-700 focus:relative border border-dark-gray "
+                            onClick={handleEditClick}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -177,11 +286,217 @@ export default function Page() {
                                     d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
                                 />
                             </svg>
+                            
                             Editar Dados
                         </button>
                     </div>
                 </div>
             </div>
+            {isModalOpen && ( 
+               <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+               <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl">
+                 <h2 className="text-2xl font-bold mb-4">Alterar Dados do Usuário</h2>
+                 <form onSubmit={handleSubmit} className="space-y-4">
+                   <div
+                     className="relative border-2 border-gray-300 border-dashed rounded-lg p-6"
+                     id="dropzone"
+                   >
+                     <input
+                       type="file"
+                       className="absolute inset-0 w-full min-h-full opacity-0 z-50"
+                       onChange={handleFileChange}
+                     />
+                     {previewSrc ? (
+                       <Image
+                         src={previewSrc}
+                         className="mt-4 mx-auto max-h-40"
+                         alt="Preview"
+                         width={160}
+                         height={160}
+                       />
+                     ) : (
+                       <div className="text-center">
+                         <Image
+                           className="mx-auto h-12 w-12"
+                           src="https://www.svgrepo.com/show/357902/image-upload.svg"
+                           alt="Upload Icon"
+                           width={48}
+                           height={48}
+                         />
+                         <h3 className="mt-2 text-sm font-medium text-gray-900">
+                           <span>Arraste e solte</span>
+                           <span className="text-indigo-600"> ou clique </span>
+                           <span>para fazer upload da sua foto de perfil</span>
+                         </h3>
+                         <p className="mt-1 text-xs text-gray-500">PNG, JPEG ou GIF até 10MB</p>
+                       </div>
+                     )}
+                   </div>
+                   {previewSrc && (
+                     <button
+                       type="button"
+                       onClick={handleRemoveImage}
+                       className="inline-block rounded-lg bg-red-600 px-5 py-2 text-sm font-medium text-white"
+                     >
+                       Remover
+                     </button>
+                   )}
+                   <div>
+                     <input
+                       type="text"
+                       className="w-full rounded-lg border border-gray-200 p-4 text-sm"
+                       placeholder="Digite seu nome completo"
+                       value={dados.name}
+                       onChange={handleChange}
+                       name="name"
+                       required
+                       minLength={8}
+                     />
+                   </div>
+                   <div className="relative">
+                        <input
+                            type={showPassword.password ? 'text' : 'password'}
+                            className="w-full rounded-lg border border-gray-200 p-4 pr-12 text-sm"
+                            placeholder="Digite sua senha"
+                            value={dados.password}
+                            onChange={handleChange}
+                            name="password"
+                            required
+                            minLength={8}
+                        />
+                        <span
+                            className="absolute inset-y-0 right-0 flex items-center px-4 cursor-pointer"
+                            onClick={() => setShowPassword({ ...showPassword, password: !showPassword.password })}
+                        >
+                            {showPassword.password ? (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="size-4 text-gray-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                    />
+                                </svg>
+                            ) : (
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="size-4 text-gray-400"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7a10.05 10.05 0 012.875-4.825M6.938 8.15A6.022 6.022 0 0112 6c2.84 0 5.148 1.826 5.875 4.261m-1.89 4.558A6.021 6.021 0 0112 18c-2.84 0-5.148-1.826-5.875-4.261"
+                                    />
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M3 3l18 18"
+                                    />
+                                </svg>
+                            )}
+                        </span>
+                    </div>
+                    <div className="relative">
+                        <input
+                            type={showPassword.confirmSenha ? 'text' : 'password'}
+                            className="w-full rounded-lg border border-gray-200 p-4 pr-12 text-sm"
+                            placeholder="Confirme sua senha"
+                            value={dados.confirmSenha}
+                            onChange={handleChange}
+                            name="confirmSenha"
+                            required
+                            minLength={8}
+                        />
+                        <span
+                            className="absolute inset-y-0 right-0 flex items-center px-4 cursor-pointer"
+                            onClick={() => setShowPassword({ ...showPassword, confirmSenha: !showPassword.confirmSenha })}
+                        >
+                            {showPassword.confirmSenha ? (
+                                <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="size-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                            </svg>
+                        ) : (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="size-4 text-gray-400"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9.27-3.11-11-7a10.05 10.05 0 012.875-4.825M6.938 8.15A6.022 6.022 0 0112 6c2.84 0 5.148 1.826 5.875 4.261m-1.89 4.558A6.021 6.021 0 0112 18c-2.84 0-5.148-1.826-5.875-4.261"
+                                />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M3 3l18 18"
+                                />
+                            </svg>  
+                            )}
+                        </span>
+                        <button
+                       type="button"
+                       onClick={() => setShowPassword({ ...showPassword, password: !showPassword.password })}
+                       className="absolute right-4 top-4 text-gray-400"
+                     >
+                     </button>
+                   </div>
+                   {senhaError && <p className="text-red-500 text-sm">{senhaError}</p>}
+                   <div className="flex justify-end space-x-4">
+                        <button
+                            type="button"
+                            onClick={handleCloseModal}
+                            className="px-4 py-2 bg-gray text-white rounded-md"
+                        >
+                            Cancelar
+                        </button>
+                        <button type="submit" className="px-4 py-2 bg-cian text-white rounded-md">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                 </form>
+               </div>
+             </div> 
+            )}
         </div>
     );
 }
+
