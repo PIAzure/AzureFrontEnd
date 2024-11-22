@@ -20,18 +20,14 @@ export default function Page() {
     const [selectedUser, setSelectedUser] = useState<any>(null);
 
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
+        const storedUserData = localStorage.getItem('user');
+        if (!storedUserData) {
             router.push('/auth/usuario');
             return;
         }
 
-        const storedUserData = localStorage.getItem('user');
-        if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
-        }
-        
-        fetchUsers(token);
+        setUserData(JSON.parse(storedUserData));
+        fetchUsers();
     }, [router]);
 
     useEffect(() => {
@@ -43,14 +39,13 @@ export default function Page() {
     .filter((user) => currentUser && user.email !== currentUser.email)
     .slice((currentPage - 1) * usersPerPage, currentPage * usersPerPage);
 
-    const fetchUsers = async (token: string) => {
+    const fetchUsers = async () => {
         try {
             setLoading(true);
             const response = await fetch('http://127.0.0.1:8000/organization/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
                 },
             });
 
@@ -59,8 +54,9 @@ export default function Page() {
             }
 
             const data = await response.json();
+            const normalizedUsers = data.map((org: any) => org.users);
+            setUsers(normalizedUsers);
 
-            setUsers(data);
             setTotalPages(Math.ceil(data.length / usersPerPage));
             setError(null);
         } catch (err: any) {
@@ -92,11 +88,14 @@ export default function Page() {
     };
 
     const confirmDelete = async () => {
-        if (!selectedUser?.email) return;
+        if (!selectedUser?.email) {
+            setError('Usuário selecionado é inválido ou não foi encontrado.');
+            return;
+        }
     
         const token = localStorage.getItem('authToken');
         if (!token) {
-            setError('Token de autenticação não encontrado.');
+            setError('Token de autenticação não encontrado. Por favor, faça login novamente.');
             return;
         }
     
@@ -110,19 +109,20 @@ export default function Page() {
             });
     
             if (!response.ok) {
-                throw new Error('Erro ao excluir usuário. Verifique as permissões ou a API.');
+                const errorData = await response.json();
+                const errorMessage = errorData.detail || 'Erro ao excluir o organizador. Verifique as permissões ou o servidor.';
+                throw new Error(errorMessage);
             }
     
             setUsers((prevUsers) => prevUsers.filter((user) => user.email !== selectedUser.email));
-            
-            setShowModal(false); 
-
+    
+            setShowModal(false);
+    
             setTimeout(() => {
-                alert(`Organizador excluído com sucesso!`);
+                alert(`Organizador "${selectedUser.email}" excluído com sucesso!`);
             }, 300);
-
         } catch (err: any) {
-            setError(err.message || 'Erro ao excluir organizador.');
+            setError(err.message || 'Erro ao excluir o organizador.');
         } finally {
             setShowModal(false);
         }
@@ -275,7 +275,8 @@ export default function Page() {
                                 {currentUsers
                                     .filter((user) => currentUser && user.email !== currentUser.email)
                                     .map((user) => (
-                                    <div key={user.email} className="h-32 rounded-lg bg-gray-200 bg-cian flex items-center justify-left px-4 py-2">
+                                    <div key={user.email} 
+                                        className="h-32 rounded-lg bg-gray-200 bg-cian flex items-center justify-left px-4 py-2">
                                             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
                                             <Image
                                                 src={'/images/usuario1.png'}
