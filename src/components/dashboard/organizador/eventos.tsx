@@ -7,7 +7,7 @@ import { PopUpDelete } from './popUpDelete';
 
 export function Eventos() {
     const [popUpDelete, setDelete] = useState(false)
-    const urlBE = 'https://5ccb-200-134-81-82.ngrok-free.app'
+    const urlBE = 'http://127.0.0.1:8000'
     const [eventoSelecionado, setEvento] = useState<IEvent | null>(null)
     const [formCadastro, setFormCadastro] = useState(false);
     const [updateCadastro, setUpdateCadastro] = useState(false);
@@ -41,7 +41,7 @@ export function Eventos() {
             const userObj = JSON.parse(user);
             const email = userObj.email;
             
-            fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/${email}/`, {
+            fetch(`http://127.0.0.1:8000/events/${email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -95,13 +95,14 @@ export function Eventos() {
                                                     />
 
                                                     <div className="p-4">
-                                                        <svg onClick={() => { setView(true) }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                                        <svg onClick={() => { setView(true),setEvento(evento) }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                                         </svg>
                                                         <div className='mb-[30px]'>
                                                             <h2>Data: {formateData(evento.timeDate)}</h2>
                                                             <h2>Local: {evento.location}</h2>
+                                                            <p>Descrição: {evento.description}</p>
                                                         </div>
 
                                                         <div className='w-full flex justify-between text-center'>
@@ -144,8 +145,8 @@ export function Eventos() {
                     <FormUpdateEvento isOpen={isOpenUpdateCadastro} evento={eventoSelecionado} /> : null
             }
             {
-                view ?
-                    <View isOpen={isOpenView} /> : null
+                view && eventoSelecionado!=null ?
+                    <View isOpen={isOpenView} evento={eventoSelecionado}/> : null
             }
             {
                 popUpDelete && eventoSelecionado ?

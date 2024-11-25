@@ -16,7 +16,7 @@ export function PopUpRegister() {
                     {/* Body */}
                     <div className="text-center p-5 flex-auto justify-center">
                        
-                        <h2 className="text-xl font-bold py-4">Pronto sua conta foi criar</h2>
+                        <h2 className="text-xl font-bold py-4">Pronto sua conta foi criada</h2>
                         <p className="text-sm text-gray-500 px-8">
                             Agora você pode logar e gerenciar seus eventos.
                         </p>

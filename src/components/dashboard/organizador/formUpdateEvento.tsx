@@ -12,12 +12,12 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
         description: evento?.description,
         location: evento.location,
         timeDate: evento.timeDate,
-        banner: `https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`,
+        banner: `http://127.0.0.1:8000${evento.banner}`,
         organizator: "teste2111@gmail.com",
         id: evento.id,
     });
     const [listaCronograma, setListaCronograma] = useState();
-    const [previewSrc, setPreviewSrc] = useState<string | null>(`https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`);
+    const [previewSrc, setPreviewSrc] = useState<string | null>(`http://127.0.0.1:8000${evento.banner}`);
 
     const dataURLtoFile = (dataurl: string, filename: string) => {
         const arr = dataurl.split(',');

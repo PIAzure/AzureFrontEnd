@@ -80,7 +80,7 @@ export default function Page() {
         }
 
         try {
-            const url = `https://fe42-200-134-81-82.ngrok-free.app/users/${email}/`;
+            const url = `http://127.0.0.1:8000/users/${email}/`;
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: {
