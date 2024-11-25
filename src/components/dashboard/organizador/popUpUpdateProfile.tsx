@@ -43,7 +43,7 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
         }
 
         if (user.foto.includes('/media/banners/')) {
-            const imageUrl = `https://5ccb-200-134-81-82.ngrok-free.app${user.foto}`;
+            const imageUrl = `http://127.0.0.1:8000${user.foto}`;
     
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -65,7 +65,7 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
     
     
         try {
-            const response = await fetch(`https://5ccb-200-134-81-82.ngrok-free.app/users/${user.email}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/users/${user.email}/`, {
                 method: 'PUT', 
                 body: formData,
             });
