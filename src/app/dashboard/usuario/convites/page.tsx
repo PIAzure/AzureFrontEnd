@@ -7,6 +7,10 @@ import Link from 'next/link';
 
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
+    const [convites, setConvites] = useState<any[]>([]); // Estado para armazenar os convites
+    const [eventos, setEventos] = useState<any[]>([]); // Estado para armazenar os eventos
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -18,22 +22,85 @@ export default function Page() {
 
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
+            const user = JSON.parse(storedUserData);
+            setUserData(user);
+            fetchConvites(user.email); // Busca os convites do usuário
         }
-
     }, [router]);
+
+    const fetchConvites = async (email: string) => {
+        try {
+            const response = await fetch(`https://27ce-200-134-81-82.ngrok-free.app/invite/${email}`);
+            const text = await response.text(); // Lê o corpo como texto
+            
+            console.log(text); // Exibe o conteúdo da resposta
+            
+            // Agora tente verificar se o conteúdo parece ser JSON
+            try {
+                const jsonResponse = JSON.parse(text); // Tenta converter o texto para JSON
+                console.log(jsonResponse); // Exibe o JSON se for válido
+            } catch (error) {
+                console.log('A resposta não é um JSON válido:', error);
+            }
+            if (!response.ok) {
+                throw new Error('Erro ao buscar convites.  ${response.status}');
+            }
+            const data = await response.json();
+            setConvites(data); // Atualiza o estado com os convites
+            
+            // Aguardar a busca dos eventos após os convites serem carregados
+            const eventosFetched = await Promise.all(data.map((convite: any) => fetchEvento(convite.event)));
+            setEventos(eventosFetched);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchEvento = async (eventId: number) => {
+        try {
+            const response = await fetch(`https://27ce-200-134-81-82.ngrok-free.app/events/${eventId}/`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar evento.');
+            }
+            const data = await response.json();
+            return data;  // Retorna o evento, que será armazenado na lista de eventos
+        } catch (err: any) {
+            setError(err.message);
+            return null;  // Caso de erro, retorna null
+        }
+    };
 
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         router.push('/auth/usuario');
     };
-
+    
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold items-center">Bem-vindo à Azure!</h1>
+                <Link href="/dashboard/usuario" passHref>
+                        <div className="flex items-center space-x-2 cursor-pointer">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="h-6 w-6"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                            />
+                            </svg>
+                        </div>
+                    </Link>
+                    <h1 className="text-lg font-semibold">Seus Convites</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -181,8 +248,27 @@ export default function Page() {
                     </button>
                 </div>
             </div>
-
-            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
+            <div className="flex-1 bg-white text-black p-6" style={{ marginTop: '4rem' }}>
+                {loading ? (
+                    <p>Carregando...</p>
+                ) : error ? (
+                    <p>{`Erro: ${error}`}</p>
+                ) : (
+                    <ul className="space-y-4">
+                        {eventos.length > 0 ? (
+                            eventos.map((evento, index) => (
+                                <li key={index} className="p-4 border rounded shadow">
+                                    <p><strong>ID do Evento:</strong> {evento.id}</p>
+                                    <p><strong>Nome do Evento:</strong> {evento.name}</p>
+                                    <p><strong>Descrição:</strong> {evento.description}</p>
+                                    <p><strong>Data:</strong> {evento.date}</p>
+                                </li>
+                            ))
+                        ) : (
+                            <p>Você não tem eventos relacionados aos seus convites.</p>
+                        )}
+                    </ul>
+                )}
             </div>
         </div>
     );

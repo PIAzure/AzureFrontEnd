@@ -41,7 +41,7 @@ export default function Page() {
         }
 
         try {
-            const response = await fetch('http://localhost:8000/users/', {
+            const response = await fetch('https://fe42-200-134-81-82.ngrok-free.app/users/', {
                 method: 'POST',
                 body: formData,
             });

@@ -29,7 +29,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
+                const response = await fetch('https://27ce-200-134-81-82.ngrok-free.app/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export default function Page() {
         }
     };
 
-    const baseUrl = "http://localhost:8000";
+    const baseUrl = "https://27ce-200-134-81-82.ngrok-free.app";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (
@@ -151,6 +151,17 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/convites"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                        </svg>
+                                        <span className="text-sm">Convites</span>
                                     </Link>
                                 </li>
                                 <li>
