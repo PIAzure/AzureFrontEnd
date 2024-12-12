@@ -1,9 +1,11 @@
+import { IEvent } from '@/utils/interface'
 import Image from 'next/image'
 import React, { useState } from 'react'
 interface IProps {
-    isOpen: Function
+    isOpen: Function,
+    evento: IEvent
 }
-export function View({ isOpen }: IProps) {
+export function View({ isOpen ,evento}: IProps) {
     const [viewVoluntarios, setViewVoluntario] = useState(false)
     return (
         <section className='bg-[#ffffff] relative'>
@@ -24,14 +26,12 @@ export function View({ isOpen }: IProps) {
                 <div className='relative h-[50vh] w-full mb-[12px]'>
                     <Image className='object-contain' src={''} fill alt='' />
                 </div>
-                <h2 className='text-20px md:text-25px font-bold mb-[12px]'>titulo evento</h2>
-                <p className='mb-12px'><span className='font-bold'>Data inicio:</span>18/12/2002</p>
-                <p className='mb-12px'><span className='font-bold'>Data final:</span>18/12/2002</p>
+                <p className='mb-12px'><span className='font-bold'>Data inicio:</span>{evento.timeDate}</p>
                 <h3 className='mb-[8px] font-bold text-18px md:text-20px'>Descrição</h3>
                 <p className='mb-12px'>
-                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Deserunt exercitationem voluptate voluptates nobis distinctio consequatur numquam, iure tempore dignissimos dolorem quibusdam ipsam praesentium ullam nesciunt quae cumque assumenda ad excepturi!
+                    {evento.description}
                 </p>
-                <p className='mb-12px'><span className='font-bold'>Localização:</span> Rua josé</p>
+                <p className='mb-12px'><span className='font-bold'>Localização:</span> {evento.location}</p>
                 <span className="flex items-center mb-[20px]">
                     <span className="h-px flex-1 bg-black"></span>
                     <span className="shrink-0 px-6">Escala de voluntários</span>

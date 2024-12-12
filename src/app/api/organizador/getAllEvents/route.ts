@@ -5,7 +5,7 @@ export async function GET(req: Request, { params }: { params: { email: string } 
 
   try {
     const response = await fetch(
-      `https://5ccb-200-134-81-82.ngrok-free.app/events/${encodeURIComponent(email)}`
+      `http://127.0.0.1:8000/events/${encodeURIComponent(email)}`
     );
 
     if (!response.ok) {

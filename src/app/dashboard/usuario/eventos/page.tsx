@@ -58,7 +58,7 @@ export default function Page() {
         }
     };
 
-    const baseUrl = "http://localhost:8000";
+    const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (

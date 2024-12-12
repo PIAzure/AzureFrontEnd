@@ -82,7 +82,7 @@ export default function Page() {
 
         try {
             // Se o email estiver definido, use a rota de alteração
-            const url = `http://localhost:8000/users/${email}/`; // Usa o email do usuário logado
+            const url = `http://127.0.0.1:8000/users/${email}/`; // Usa o email do usuário logado
             const response = await fetch(url, {
                 method: 'PUT', // Usando o método PUT para alterar dados
                 headers: {

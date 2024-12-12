@@ -4,11 +4,11 @@ import Image from 'next/image';
 import React, { useEffect, useState } from 'react'
 
 export default function Page() {
+const [sucess,setSucess]= useState(false);
     const [dados, setDados] = useState({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
     const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
-    const [sucess, setSuccess] = useState(false)
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDados((prevDados) => ({
@@ -43,15 +43,24 @@ export default function Page() {
         }
 
         try {
-            const response = await fetch('/api/organizador/register/', {
+            const response = await fetch('http://127.0.0.1:8000/organization/', {
                 method: 'POST',
                 body: formData,
             });
+            console.log(response.status);
+            if (response.status !== 201) {
+                throw new Error(`Falha ao criar usuário! Código de status: ${response.status}`);
+            }
 
-            setSuccess(true)
+            if (!response.ok) {
+                throw new Error('Falha ao criar usuário!');
+            }
+
+            alert("Cadastro realizado com sucesso!");
             setDados({ nome: '', email: '', senha: '', confirmSenha: '', foto: '' });
             setPreviewSrc(null);
             setSenhaError(null);
+            setSucess(true)
             setShowPassword({ senha: false, confirmSenha: false });
         } catch (error) {
             console.error("Erro ao enviar dados para o backend", error);
@@ -75,7 +84,7 @@ export default function Page() {
         }
         return new File([u8arr], filename, { type: mime });
     };
-
+       
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         e.currentTarget.classList.add("border-indigo-600");
@@ -102,12 +111,12 @@ export default function Page() {
         if (!file) return;
 
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-            alert('Formato inválido!/nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
+            alert('Formato inválido!\nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
             return;
         }
 
         if (file.size > maxFileSize) {
-            alert('Tamanho inválido!/nO tamanho máximo permitido é até 10MB.');
+            alert('Tamanho inválido!\nO tamanho máximo permitido é até 10MB.');
             return;
         }
 

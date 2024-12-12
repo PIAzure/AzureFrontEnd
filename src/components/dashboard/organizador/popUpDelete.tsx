@@ -10,7 +10,7 @@ interface IProps {
 export function PopUpDelete({ isOpen, evento }: IProps) {
     const deleteEvent = async () => {
         try {
-            const response = await fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/event/${evento.id}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/events/event/${evento.id}/`, {
                 method: 'DELETE', // Método DELETE para remover o evento
                 headers: {
                     'Content-Type': 'application/json',

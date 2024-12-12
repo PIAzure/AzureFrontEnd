@@ -38,7 +38,7 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
         }
 
         if (evento.banner.includes('/media/banners/')) {
-            const imageUrl = `https://5ccb-200-134-81-82.ngrok-free.app${evento.banner}`;
+            const imageUrl = `${evento.banner}`;
     
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -60,7 +60,7 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
     
     
         try {
-            const response = await fetch(`https://5ccb-200-134-81-82.ngrok-free.app/events/event/${evento.id}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/events/event/${evento.id}/`, {
                 method: 'PUT', 
                 body: formData,
             });

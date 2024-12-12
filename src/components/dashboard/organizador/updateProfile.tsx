@@ -155,9 +155,9 @@ export function UpdateProfile({ isOpen }: IProps) {
             const email = userObj.email;
             setDados((prevEvent) => ({
                 ...prevEvent,
-                foto: `https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`, // Atualiza o campo específico do estado
+                foto: `http://127.0.0.1:8000${userObj.imagefield}`, // Atualiza o campo específico do estado
             }));
-            setPreviewSrc(`https://5ccb-200-134-81-82.ngrok-free.app${userObj.imagefield}`)
+            setPreviewSrc(`http://127.0.0.1:8000${userObj.imagefield}`)
             setDados((prevEvent) => ({
                 ...prevEvent,
                 nome: userObj.name, // Atualiza o campo específico do estado
