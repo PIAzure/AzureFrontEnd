@@ -10,6 +10,7 @@ export default function Page() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [events, setEvents] = useState([]);
+    const [registrations, setRegistrations] = useState<{ [key: number]: boolean }>({}); // Controla a inscrição por evento
     const eventsPerPage = 6;
     const router = useRouter();
 
@@ -57,6 +58,78 @@ export default function Page() {
             setCurrentPage(newPage);
         }
     };
+
+    const handleRegisterAsParticipant = async (eventId: number) => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const email = user.email;
+        if (!email) {
+            setError('Email do usuário não encontrado.');
+            return;
+        }
+
+        const participantData = {
+            user: email,
+            event: eventId
+        };
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/participant', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(participantData),
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao se inscrever no evento.');
+            }
+
+            // Atualiza a inscrição para o evento específico
+            setRegistrations((prev) => ({
+                ...prev,
+                [eventId]: true,
+            }));
+        } catch (err: any) {
+            setError(err.message || 'Erro ao inscrever no evento.');
+        }
+    };
+
+    const handleCancelRegistration = async (eventId: number) => {
+        try {
+            // Obtém os dados de inscrição pelo eventId
+            const fetchResponse = await fetch(`http://127.0.0.1:8000/participant/${eventId}/`);
+            if (!fetchResponse.ok) {
+                throw new Error('Erro ao buscar inscrição.');
+            }
+    
+            const registrationData = await fetchResponse.json();
+            const registrationId = registrationData.id; // Supondo que o campo `id` seja retornado
+    
+            if (!registrationId) {
+                throw new Error('ID de inscrição não encontrado.');
+            }
+    
+            // Executa a exclusão utilizando o ID encontrado
+            const deleteResponse = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
+                method: 'DELETE',
+            });
+    
+            if (!deleteResponse.ok) {
+                throw new Error('Erro ao cancelar inscrição.');
+            }
+    
+            // Atualiza o estado para remover a inscrição
+            setRegistrations((prev) => {
+                const newRegistrations = { ...prev };
+                delete newRegistrations[eventId];
+                return newRegistrations;
+            });
+        } catch (err: any) {
+            setError(err.message || 'Erro ao cancelar inscrição.');
+        }
+    };
+
 
     const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
@@ -143,7 +216,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_participante"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -213,49 +286,32 @@ export default function Page() {
                                             <p className="mt-1 text-xs text-black"><strong>Data e Horário:</strong> {event.timeDate ? new Date(event.timeDate).toLocaleString() : "Data não disponível"}</p>
 
                                             <form className="mt-4 flex gap-2">
-                                                <button
-                                                    className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                    }}
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        strokeWidth="1.5"
-                                                        stroke="currentColor"
-                                                        className="w-11 h-11 mr-2"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                                                        />
-                                                    </svg>
-                                                    Inscrever-se como Participante
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        strokeWidth="1.5"
-                                                        stroke="currentColor"
-                                                        className="w-11 h-11 mr-2"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                                                        />
-                                                    </svg>
-                                                    Inscrever-se como Voluntário
-                                                </button>
-                                            </form>
+                                                {!registrations[event.id] ? (
+                                                    <>
+                                                        <button
+                                                            className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                            onClick={(e) => {
+                                                                e.preventDefault();
+                                                                handleRegisterAsParticipant(event.id);
+                                                            }}
+                                                            >
+                                                            Inscrever-se como Participante
+                                                        </button>
+                                                        <button
+                                                            className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                        >
+                                                            Inscrever-se como Voluntário
+                                                        </button>
+                                                    </>
+                                                    ) : (
+                                                        <button
+                                                            className="w-full flex items-center justify-center rounded bg-red-500 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                            onClick={() => handleCancelRegistration(event.id)}
+                                                        >
+                                                            Cancelar inscrição
+                                                    </button>
+                                                )}
+                                        </form>
                                         </div>
                                     </a>
                                 ))}
