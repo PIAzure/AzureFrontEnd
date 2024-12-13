@@ -7,8 +7,6 @@ import Link from 'next/link';
 
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
-    const [invites, setInvites] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -20,130 +18,17 @@ export default function Page() {
 
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
-            const parsedUser = JSON.parse(storedUserData);
-            setUserData(parsedUser);
-            fetchInvites(parsedUser.email);
+            setUserData(JSON.parse(storedUserData));
         }
-    
+
     }, [router]);
-
-    const fetchInvites = async (email: string) => {
-        setLoading(true);
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/invite/${email}/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao buscar convites');
-            }
-
-            const data = await response.json();
-
-            // Buscar informações adicionais de cada evento
-            const updatedInvites = await Promise.all(
-                data.map(async (invite: any) => {
-                    const eventDetails = await fetchEventDetails(invite.event);
-                    if (eventDetails) {
-                        // Garantir que os dados estejam corretamente atribuídos
-                        return {
-                            ...invite,
-                            eventDetails: {
-                                ...eventDetails,
-                                begin: new Date(eventDetails.begin).toLocaleString(), // Formatar a data de início
-                                end: new Date(eventDetails.end).toLocaleString(), // Formatar a data de término
-                                organizer: eventDetails.organizer || 'Desconhecido', // Verificar se há organizador
-                            }
-                        };
-                    } else {
-                        return { ...invite, eventDetails: null };
-                    }
-                })
-            );
-
-            setInvites(updatedInvites);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const fetchEventDetails = async (event: string) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/events/event/${event}/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao buscar detalhes do evento');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error(`Erro ao buscar detalhes do evento ${event}`, error);
-            return null;
-        }
-    };
-
-    const handleAccept = async (inviteId: string) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (!response.ok) {
-                throw new Error('Erro ao aceitar o convite');
-            }
-    
-            // Atualize o estado ou faça outras ações após aceitar o convite
-            console.log(`Convite ${inviteId} aceito!`);
-            
-            // Se você quiser atualizar a lista de convites após aceitar
-            setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
-            
-        } catch (error) {
-            console.error(`Erro ao aceitar o convite ${inviteId}`, error);
-        }
-    };
-
-    const handleReject = async (inviteId: string) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (!response.ok) {
-                throw new Error('Erro ao recusar o convite');
-            }
-    
-            // Atualizar a lista de convites após a recusa, removendo o convite rejeitado
-            setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
-            console.log(`Convite ${inviteId} recusado!`);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-    
 
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         router.push('/auth/usuario');
     };
-    
+    const baseUrl = "http://127.0.0.1:8000";
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
@@ -166,7 +51,7 @@ export default function Page() {
                             </svg>
                         </div>
                     </Link>
-                    <h1 className="text-lg font-semibold items-center">Convites Recebidos</h1>
+                    <h1 className="text-lg font-semibold items-center">Suas Inscrições</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -226,7 +111,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_participante"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -238,7 +123,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard/usuario/inscricoes_participante"
+                                        href="#"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -294,55 +179,13 @@ export default function Page() {
 
             <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
                 <div className="p-6">
-                        {loading ? (
-                            <p>Carregando convites...</p>
-                        ) : invites.length > 0 ? (
-                            invites.map((invite) => (
-                                
-                                <article
-                                    key={invite.id}
-                                    className="mb-4 p-4 rounded-lg shadow-md border bg-gray-100"
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h3 className="text-lg font-bold">{invite.eventName}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Descrição:</strong> {invite.eventDetails?.description || 'Sem Descrição'}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Localização:</strong> {invite.eventDetails?.location || 'Sem Localização'}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Organizador:</strong> {invite.eventDetails?.organizator || 'Desconhecido'}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Data de Início:</strong> {invite.eventDetails?.begin?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.begin?.split(',')[1]?.trim() || 'Não informado'}
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Data de Término:</strong> {invite.eventDetails?.end?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.end?.split(',')[1]?.trim() || 'Não informado'}
-                                            </p>
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => handleAccept(invite.id)}
-                                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                            >
-                                                Aceitar
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(invite.id)}
-                                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                                            >
-                                                Recusar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </article>
-                            ))
-                        ) : (
-                            <p>Você não tem convites disponíveis.</p>
-                        )}
-                    </div>              
+                    <article
+                    className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s]"
+                    >
+                    <div className="rounded-[10px] bg-white p-4 !pt-20 sm:p-6">
+                    </div>
+                    </article>
+            </div>
             </div>
         </div>
     );

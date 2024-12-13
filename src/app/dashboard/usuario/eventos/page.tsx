@@ -29,7 +29,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://27ce-200-134-81-82.ngrok-free.app/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
