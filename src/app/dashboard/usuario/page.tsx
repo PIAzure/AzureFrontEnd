@@ -28,7 +28,7 @@ export default function Page() {
         localStorage.removeItem('user');
         router.push('/auth/usuario');
     };
-
+    const baseUrl = "http://127.0.0.1:8000";
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
@@ -105,7 +105,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_participante"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">

@@ -29,7 +29,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://27ce-200-134-81-82.ngrok-free.app/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export default function Page() {
         }
     };
 
-    const baseUrl = "https://27ce-200-134-81-82.ngrok-free.app";
+    const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (
@@ -143,7 +143,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_participante"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
