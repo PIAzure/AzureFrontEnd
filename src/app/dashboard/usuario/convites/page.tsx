@@ -7,6 +7,8 @@ import Link from 'next/link';
 
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
+    const [invites, setInvites] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -18,22 +20,148 @@ export default function Page() {
 
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
+            const parsedUser = JSON.parse(storedUserData);
+            setUserData(parsedUser);
+            fetchInvites(parsedUser.email);
         }
-
+    
     }, [router]);
+
+    const fetchInvites = async (email: string) => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/invite/${email}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar convites');
+            }
+
+            const data = await response.json();
+
+            const updatedInvites = await Promise.all(
+                data.map(async (invite: any) => {
+                    const eventDetails = await fetchEventDetails(invite.event);
+                    if (eventDetails) {
+                        return {
+                            ...invite,
+                            eventDetails: {
+                                ...eventDetails,
+                                begin: new Date(eventDetails.begin).toLocaleString(),
+                                end: new Date(eventDetails.end).toLocaleString(),
+                                organizer: eventDetails.organizer || 'Desconhecido',
+                            }
+                        };
+                    } else {
+                        return { ...invite, eventDetails: null };
+                    }
+                })
+            );
+
+            setInvites(updatedInvites);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchEventDetails = async (event: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/events/event/${event}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar detalhes do evento');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error(`Erro ao buscar detalhes do evento ${event}`, error);
+            return null;
+        }
+    };
+
+    const handleAccept = async (inviteId: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Erro ao aceitar o convite');
+            }
+    
+            console.log(`Convite ${inviteId} aceito!`);
+            
+            setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
+            
+        } catch (error) {
+            console.error(`Erro ao aceitar o convite ${inviteId}`, error);
+        }
+    };
+
+    const handleReject = async (inviteId: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Erro ao recusar o convite');
+            }
+    
+            setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
+            console.log(`Convite ${inviteId} recusado!`);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+    
 
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         router.push('/auth/usuario');
     };
-
+    
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold items-center">Bem-vindo à Azure!</h1>
+                <Link href="/dashboard/usuario" passHref>
+                        <div className="flex items-center space-x-2 cursor-pointer">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="h-6 w-6"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                            />
+                            </svg>
+                        </div>
+                    </Link>
+                    <h1 className="text-lg font-semibold items-center">Convites Recebidos</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -93,7 +221,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard/usuario/inscricoes_voluntario"
+                                        href="#"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -157,32 +285,59 @@ export default function Page() {
                         </div>
                     </div>
                 </div>
-                <div className="sticky inset-x-0 bottom-0 border-t border-white p-2 text-red-500">
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="group relative flex w-full justify-center space-x-2 rounded-xl px-4 py-2"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 opacity-75"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                        </svg>
-                        <span className="text-sm text-red-500">Sair</span>
-                    </button>
-                </div>
             </div>
 
             <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
+                <div className="p-6">
+                        {loading ? (
+                            <p>Carregando convites...</p>
+                        ) : invites.length > 0 ? (
+                            invites.map((invite) => (
+                                
+                                <article
+                                    key={invite.id}
+                                    className="mb-4 p-4 rounded-lg shadow-md border bg-gray-100"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-bold">{invite.eventName}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Descrição:</strong> {invite.eventDetails?.description || 'Sem Descrição'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Localização:</strong> {invite.eventDetails?.location || 'Sem Localização'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Organizador:</strong> {invite.eventDetails?.organizator || 'Desconhecido'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Data de Início:</strong> {invite.eventDetails?.begin?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.begin?.split(',')[1]?.trim() || 'Não informado'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Data de Término:</strong> {invite.eventDetails?.end?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.end?.split(',')[1]?.trim() || 'Não informado'}
+                                            </p>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => handleAccept(invite.id)}
+                                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                                            >
+                                                Aceitar
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(invite.id)}
+                                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                            >
+                                                Recusar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </article>
+                            ))
+                        ) : (
+                            <p>Você não tem convites disponíveis.</p>
+                        )}
+                    </div>              
             </div>
         </div>
     );
