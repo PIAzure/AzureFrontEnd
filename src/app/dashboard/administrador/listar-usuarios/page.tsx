@@ -45,7 +45,7 @@ export default function Page() {
     const fetchUsers = async (token: string) => {
         try {
             setLoading(true);
-            const response = await fetch('http://127.0.0.1:8000/users/', { 
+            const response = await fetch('http://127.0.0.1:8000/users/', {  // Corrigindo a URL
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
