@@ -215,7 +215,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">

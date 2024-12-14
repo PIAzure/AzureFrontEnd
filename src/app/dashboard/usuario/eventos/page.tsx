@@ -10,8 +10,12 @@ export default function Page() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [events, setEvents] = useState([]);
-    const [registrations, setRegistrations] = useState<{ [key: number]: boolean }>({}); // Controla a inscrição por evento
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<any>(null); // Armazena o evento selecionado
     const eventsPerPage = 6;
+    const [horarios, setHorarios] = useState([]);
+    const [selectedHorary, setSelectedHorary] = useState<number | null>(null);  // Pode ser um número ou null
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -58,84 +62,146 @@ export default function Page() {
             setCurrentPage(newPage);
         }
     };
-
-    const handleRegisterAsParticipant = async (eventId: number) => {
-        const user = JSON.parse(localStorage.getItem('user') || '{}');
-        const email = user.email;
-        if (!email) {
-            setError('Email do usuário não encontrado.');
+    
+    const handleInscreverParticipante = async (eventId: number) => {
+        const user = JSON.parse(localStorage.getItem('user') || '{}'); // Buscando os dados do usuário
+    
+        const userEmail = user?.email;
+        if (!userEmail) {
+            alert('Não foi possível obter o email do usuário.');
             return;
         }
-
-        const participantData = {
-            user: email,
-            event: eventId
-        };
-
+    
+        // Verificar se o usuário já está inscrito no evento
         try {
+            const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
+            if (!checkResponse.ok) {
+                throw new Error('Erro ao verificar inscrição do usuário.');
+            }
+    
+            const checkData = await checkResponse.json();
+    
+            // Verificar se o evento já está na lista de inscrições do usuário
+            const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
+    
+            if (isAlreadyRegistered) {
+                console.log('Você já está inscrito nesse evento!');
+                alert('Você já está inscrito nesse evento!');
+                return;
+            }
+    
+            // Caso o usuário não esteja inscrito, proceder com a inscrição
             const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(participantData),
+                body: JSON.stringify({
+                    user: userEmail,  // Enviando o email do usuário
+                    event: eventId    // Enviando o ID do evento
+                }),
             });
-
+    
             if (!response.ok) {
-                throw new Error('Erro ao se inscrever no evento.');
+                throw new Error(`Erro ao inscrever-se no evento: ${response.statusText}`);
             }
-
-            // Atualiza a inscrição para o evento específico
-            setRegistrations((prev) => ({
-                ...prev,
-                [eventId]: true,
-            }));
+    
+            console.log("Parabéns, Inscrição realizada com sucesso!");
+            alert('Inscrição realizada com sucesso!');
         } catch (err: any) {
-            setError(err.message || 'Erro ao inscrever no evento.');
+            console.error("Erro na inscrição:", err.message || err);
+            alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
         }
     };
-
-    const handleCancelRegistration = async (eventId: number) => {
+    
+    const fetchHorarios = async (eventId: number) => {
         try {
-            // Obtém os dados de inscrição pelo eventId
-            const fetchResponse = await fetch(`http://127.0.0.1:8000/participant/${eventId}/`);
-            if (!fetchResponse.ok) {
-                throw new Error('Erro ao buscar inscrição.');
-            }
+          const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
+          if (!response.ok) {
+            throw new Error('Erro ao buscar horários do evento.');
+          }
     
-            const registrationData = await fetchResponse.json();
-            const registrationId = registrationData.id; // Supondo que o campo `id` seja retornado
-    
-            if (!registrationId) {
-                throw new Error('ID de inscrição não encontrado.');
-            }
-    
-            // Executa a exclusão utilizando o ID encontrado
-            const deleteResponse = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
-                method: 'DELETE',
-            });
-    
-            if (!deleteResponse.ok) {
-                throw new Error('Erro ao cancelar inscrição.');
-            }
-    
-            // Atualiza o estado para remover a inscrição
-            setRegistrations((prev) => {
-                const newRegistrations = { ...prev };
-                delete newRegistrations[eventId];
-                return newRegistrations;
-            });
+          const data = await response.json();
+          setHorarios(data[0]?.horarys || []);
         } catch (err: any) {
-            setError(err.message || 'Erro ao cancelar inscrição.');
+          console.error(err);
+          alert('Erro ao carregar os horários.');
         }
+      };
+
+    const openModal = (event: any) => {
+        setSelectedEvent(event);
+        fetchHorarios(event.id); // Buscar horários ao abrir o modal
+        setIsModalOpen(true);
+    };
+    
+    const closeModal = () => {
+        setSelectedEvent(null);
+        setHorarios([]);
+        setIsModalOpen(false);
     };
 
+    const openConfirmModal = (horaryId: number) => {
+        setSelectedHorary(horaryId);  // Salva o ID do horário selecionado
+        setIsConfirmModalOpen(true);  // Abre o modal de confirmação
+    };
 
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
+    };
+
+    const handleConfirmRegistration = () => {
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userEmail = userData?.email;
+        const horaryId = selectedHorary;    // O ID do horário que foi selecionado
+        console.log(userEmail);
+        console.log(horaryId);
+
+        if (!userEmail) {
+            alert('Não foi possível obter o email do usuário.');
+            closeConfirmModal();
+            return;
+        }
+    
+        if (!horaryId) {
+            alert('Não foi possível obter o ID do horário.');
+            closeConfirmModal();
+            return;
+        }
+
+        // URL para verificar se o usuário já está registrado para este evento e horário
+        const scaleUrl = `http://127.0.0.1:8000/scale/3/`;  // Use o ID do evento específico aqui
+
+
+        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Erro ao realizar o cadastro.');
+                closeConfirmModal();
+            }
+            alert('Cadastro realizado com sucesso!');
+            closeConfirmModal(); // Fechar o modal de confirmação após a inscrição
+            closeModal(); // Fechar o modal do evento
+        })
+        .catch((error) => {
+            console.error(error);
+            alert('Erro ao realizar o cadastro.');
+            closeConfirmModal();
+        });
+    };
+    
     const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (
-        <div className="flex h-screen border border-white">
+        <div className="flex h-screen border border-white justify-">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
                     <Link href="/dashboard/usuario" passHref>
@@ -204,7 +270,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -283,35 +349,74 @@ export default function Page() {
                                         <div className="relative bg-light-gray p-4">
                                             <p className="mt-1 text-xs text-black"><strong>Descrição:</strong> {event.description}</p>
                                             <p className="mt-1 text-xs text-black"><strong>Localização:</strong> {event.location}</p>
-                                            <p className="mt-1 text-xs text-black"><strong>Data e Horário:</strong> {event.timeDate ? new Date(event.timeDate).toLocaleString() : "Data não disponível"}</p>
+                                            <p className="mt-1 text-xs text-black"><strong>Data de Início:</strong> {event.begin ? (
+                                            <>
+                                                {new Date(event.begin).toLocaleString('pt-BR', { 
+                                                year: 'numeric', 
+                                                month: 'numeric', 
+                                                day: 'numeric' 
+                                                })} <strong>Horário</strong> {new Date(event.begin).toLocaleTimeString('pt-BR')}
+                                            </>
+                                            ) : "Data não disponível"}</p>
 
-                                            <form className="mt-4 flex gap-2">
-                                                {!registrations[event.id] ? (
-                                                    <>
-                                                        <button
-                                                            className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                            onClick={(e) => {
-                                                                e.preventDefault();
-                                                                handleRegisterAsParticipant(event.id);
-                                                            }}
-                                                            >
-                                                            Inscrever-se como Participante
-                                                        </button>
-                                                        <button
-                                                            className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                            <p className="mt-1 text-xs text-black"><strong>Data de Término:</strong> {event.end ? (
+                                            <>
+                                                {new Date(event.end).toLocaleString('pt-BR', { 
+                                                year: 'numeric', 
+                                                month: 'numeric', 
+                                                day: 'numeric' 
+                                                })} <strong>Horário</strong> {new Date(event.end).toLocaleTimeString('pt-BR')}
+                                            </>
+                                            ) : "Data não disponível"}</p>
+
+                                            <form className="mt-1 flex gap-2">
+                                                <button
+                                                        className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleInscreverParticipante(event.id); // Passa o ID do evento ao clicar
+                                                        }}
+                                                    >
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            strokeWidth="1.5"
+                                                            stroke="currentColor"
+                                                            className="w-11 h-11 mr-2"
                                                         >
-                                                            Inscrever-se como Voluntário
-                                                        </button>
-                                                    </>
-                                                    ) : (
-                                                        <button
-                                                            className="w-full flex items-center justify-center rounded bg-red-500 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                            onClick={() => handleCancelRegistration(event.id)}
-                                                        >
-                                                            Cancelar inscrição
-                                                    </button>
-                                                )}
-                                        </form>
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V9.75M8.25 21h8.25" />
+                                                        </svg>
+                                                        Inscrever-se como Participante
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        openModal(event); // Abre o modal com o evento selecionado
+                                                    }}
+                                                >
+                                                    <svg
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        strokeWidth="1.5"
+                                                        stroke="currentColor"
+                                                        className="w-11 h-11 mr-2"
+                                                    >
+                                                        <path
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                                                        />
+                                                    </svg>
+                                                    Inscrever-se como Voluntário
+                                                </button>
+                                            </form>
                                         </div>
                                     </a>
                                 ))}
@@ -345,6 +450,78 @@ export default function Page() {
                     </>
                 )}
             </div>
+
+            {isModalOpen && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+        <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl p-8 h-[600px]">
+            <div className="flex justify-between items-center border-b pb-4 text-gray">
+                <h2 className="text-2xl text-green-500 font-bold">Agendamento</h2>
+                <button className="text-red-500 font-bold hover:text-gray-700" onClick={closeModal}>✕</button>
+            </div>
+
+            <div className="mt-4 space-y-4 max-h-[400px] overflow-y-auto">
+                {horarios.length > 0 ? (
+                    horarios.map((horario: any) => {
+                        const datetime = new Date(horario.datetime);
+                        return (
+                            <div key={horario.id} className="p-4 bg-gray-100 rounded shadow border border-gray flex justify-between items-center">
+                                <div>
+                                    <p className="max-w-xs truncate">
+                                        <strong>Data:</strong>{" "}
+                                        {datetime.toLocaleDateString("pt-BR", { timeZone: "UTC" })}
+                                    </p>
+                                    <p className="max-w-xs truncate">
+                                        <strong>Horário:</strong>{" "}
+                                        {datetime.toLocaleTimeString("pt-BR", {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                            hour12: false,
+                                            timeZone: "UTC",
+                                        })}
+                                    </p>
+                                    <p className="max-w-xs truncate">
+                                        <strong>Vagas Restantes:</strong> {horario.max_voluntary_scale}
+                                    </p>
+                                </div>
+                                <button
+                                    className="bg-blue text-white py-2 px-4 rounded hover:bg-blue-600"
+                                    onClick={() => openConfirmModal(horario.id)}
+                                >
+                                    Selecionar
+                                </button>
+                            </div>
+                        );
+                    })
+                ) : (
+                    <p className="text-gray-600"><strong>Nenhum horário disponível para este evento.</strong></p>
+                )}
+                {/* Modal de confirmação */}
+            {isConfirmModalOpen && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                        <p className="text-lg font-bold">Tem certeza que deseja se cadastrar nesse horário?</p>
+                        <div className="flex justify-end mt-4 space-x-4">
+                            <button
+                                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                onClick={closeConfirmModal}
+                            >
+                                Não
+                            </button>
+                            <button
+                                className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                onClick={handleConfirmRegistration}
+                            >
+                                Sim
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+
