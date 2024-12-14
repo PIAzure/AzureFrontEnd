@@ -7,7 +7,8 @@ import Link from 'next/link';
 
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
-    const [events, setEvents] = useState<any[]>([]);
+    const [invites, setInvites] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -19,102 +20,125 @@ export default function Page() {
 
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
+            const parsedUser = JSON.parse(storedUserData);
+            setUserData(parsedUser);
+            fetchInvites(parsedUser.email);
         }
+    
+    }, [router]);
 
-        const fetchEventDetails = async () => {
-            try {
-                const responseEvents = await fetch('http://127.0.0.1:8000/events/admin/all/');
-                const eventsData = await responseEvents.json();
-    
-                const userEmail = userData?.email;
-    
-                const updatedEvents = await Promise.all(eventsData.map(async (event: any) => {
-                    const responseScale = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
-                    const scaleData = await responseScale.json();
-
-                    if (scaleData && Array.isArray(scaleData[0]?.horarys)) {
-                        const isUserRegistered = scaleData[0].horarys.some((hour: any) =>
-                            hour.voluntarys.some((voluntary: any) => voluntary.user.email === userEmail)
-                        );
-    
-                        return {
-                            ...event,
-                            registered: isUserRegistered,
-                        };
-                    }
-    
-                    return event;
-                }));
-    
-                const filteredEvents = updatedEvents.filter(event => event.registered);
-    
-                setEvents(filteredEvents);
-            } catch (error) {
-                console.error("Erro ao buscar os eventos e dados de escala:", error);
-            }
-        };
-    
-        fetchEventDetails();
-
-    }, [userData?.email]);
-    
-    const cancelRegistration = async (eventId: number) => {
+    const fetchInvites = async (email: string) => {
+        setLoading(true);
         try {
-            const getResponse = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/invite/${email}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
-            if (!getResponse.ok) {
-                throw new Error(`Erro ao buscar informações do evento: ${getResponse.statusText}`);
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar convites');
             }
-    
-            const eventData = await getResponse.json();
-    
-            console.log("eventData:", eventData);
-    
-            let voluntaryId: number | null = null;
-    
-            eventData.forEach((scale: any) => {
-                scale.horarys.forEach((horary: any) => {
-                    if (horary.voluntarys && horary.voluntarys.length > 0) {
-                        voluntaryId = horary.voluntarys[0].id;
+
+            const data = await response.json();
+
+            const updatedInvites = await Promise.all(
+                data.map(async (invite: any) => {
+                    const eventDetails = await fetchEventDetails(invite.event);
+                    if (eventDetails) {
+                        return {
+                            ...invite,
+                            eventDetails: {
+                                ...eventDetails,
+                                begin: new Date(eventDetails.begin).toLocaleString(),
+                                end: new Date(eventDetails.end).toLocaleString(),
+                                organizer: eventDetails.organizer || 'Desconhecido',
+                            }
+                        };
+                    } else {
+                        return { ...invite, eventDetails: null };
                     }
-                });
+                })
+            );
+
+            setInvites(updatedInvites);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchEventDetails = async (event: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/events/event/${event}/`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar detalhes do evento');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error(`Erro ao buscar detalhes do evento ${event}`, error);
+            return null;
+        }
+    };
+
+    const handleAccept = async (inviteId: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
     
-            if (!voluntaryId) {
-                throw new Error('Nenhum voluntário encontrado para este evento.');
+            if (!response.ok) {
+                throw new Error('Erro ao aceitar o convite');
             }
     
-            console.log("voluntaryId:", voluntaryId);
-    
-            const deleteResponse = await fetch(`http://127.0.0.1:8000/scale/${voluntaryId}/`, {
+            console.log(`Convite ${inviteId} aceito!`);
+            
+            setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
+            
+        } catch (error) {
+            console.error(`Erro ao aceitar o convite ${inviteId}`, error);
+        }
+    };
+
+    const handleReject = async (inviteId: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/invite/acept/${inviteId}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
     
-            if (deleteResponse.ok) {
-                alert('Inscrição cancelada com sucesso!');
-                setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
-            } else {
-                throw new Error(`Erro ao cancelar inscrição: ${deleteResponse.statusText}`);
+            if (!response.ok) {
+                throw new Error('Erro ao recusar o convite');
             }
+    
+            setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
+            console.log(`Convite ${inviteId} recusado!`);
         } catch (error) {
-            console.error('Erro:', error instanceof Error ? error.message : error);
+            console.error(error);
         }
     };
     
+
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        router.push('/auth/usuario');
+    };
     
-
-
-    const baseUrl = "http://127.0.0.1:8000";
-
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
@@ -137,7 +161,7 @@ export default function Page() {
                             </svg>
                         </div>
                     </Link>
-                    <h1 className="text-lg font-semibold items-center">Suas Inscrições como Voluntário</h1>
+                    <h1 className="text-lg font-semibold items-center">Convites Recebidos</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -197,7 +221,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard/usuario/inscricoes_voluntario"
+                                        href="#"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -263,54 +287,58 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem' }}>
+            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
                 <div className="p-6">
-                    {events.length > 0 ? (
-                        events.map((event: any, index: number) => (
-                            <article
-                                key={index}
-                                className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
-                            >
-                                <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
-                                    <div className="flex-1 pr-4 text-sm text-gray-600">
-                                        <h2 className="text-lg font-semibold mb-2">
-                                            <strong>{event.description}</strong>
-                                        </h2>
-                                        <p><strong>Localização:</strong> {event.location}</p>
-                                        <p><strong>Organizador:</strong> {event.organizator}</p>
-                                        <p>
-                                            <strong>Data de Início: </strong>
-                                            {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                            <strong> Horário: </strong>
-                                            {new Date(event.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                        </p>
-                                        <p>
-                                            <strong>Data de Término: </strong>
-                                            {new Date(event.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                            <strong> Horário: </strong>
-                                            {new Date(event.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                        </p>
-                                    </div>
-
-                                    <div className="mt-10">
-                                        <button
-                                            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
-                                            onClick={() => cancelRegistration(event.id)}
+                        {loading ? (
+                            <p>Carregando convites...</p>
+                        ) : invites.length > 0 ? (
+                            invites.map((invite) => (
+                                
+                                <article
+                                    key={invite.id}
+                                    className="mb-4 p-4 rounded-lg shadow-md border bg-gray-100"
+                                >
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="text-lg font-bold">{invite.eventName}</h3>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Descrição:</strong> {invite.eventDetails?.description || 'Sem Descrição'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Localização:</strong> {invite.eventDetails?.location || 'Sem Localização'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Organizador:</strong> {invite.eventDetails?.organizator || 'Desconhecido'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Data de Início:</strong> {invite.eventDetails?.begin?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.begin?.split(',')[1]?.trim() || 'Não informado'}
+                                            </p>
+                                            <p className="text-sm text-gray-600">
+                                                <strong>Data de Término:</strong> {invite.eventDetails?.end?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.end?.split(',')[1]?.trim() || 'Não informado'}
+                                            </p>
+                                        </div>
+                                        <div className="flex space-x-2">
+                                            <button
+                                                onClick={() => handleAccept(invite.id)}
+                                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
                                             >
-                                            <i className="fas fa-times mr-2"></i>
-                                            Cancelar Inscrição
-                                        </button>
+                                                Aceitar
+                                            </button>
+                                            <button
+                                                onClick={() => handleReject(invite.id)}
+                                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                                            >
+                                                Recusar
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            </article>
-                        ))
-                    ) : (
-                        <div className="flex justify-center items-start mt-64">
-                            <p><strong>Você não está inscrito em nenhum evento.</strong></p>
-                        </div>
-                    )}
-                </div>
-                </div>
+                                </article>
+                            ))
+                        ) : (
+                            <p>Você não tem convites disponíveis.</p>
+                        )}
+                    </div>              
+            </div>
         </div>
     );
 }

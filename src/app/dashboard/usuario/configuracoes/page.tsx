@@ -12,10 +12,9 @@ export default function Page() {
     const [senhaError, setSenhaError] = useState<string | null>(null);
     const router = useRouter();
 
-    // Recupera o token e o email do usuário logado
     const token = localStorage.getItem('authToken');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const email = user?.email;  // Email do usuário logado
+    const email = user?.email;
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -81,12 +80,11 @@ export default function Page() {
         }
 
         try {
-            // Se o email estiver definido, use a rota de alteração
-            const url = `http://127.0.0.1:8000/users/${email}/`; // Usa o email do usuário logado
+            const url = `http://127.0.0.1:8000/users/${email}/`;
             const response = await fetch(url, {
-                method: 'PUT', // Usando o método PUT para alterar dados
+                method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`, // Inclui o token no cabeçalho
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: formData,
             });
@@ -137,7 +135,7 @@ export default function Page() {
             if (storedUserData) {
                 const user = JSON.parse(storedUserData);
                 setDados(user);
-                setPreviewSrc(user.image || ''); // Definir a imagem do usuário, se existir
+                setPreviewSrc(user.image || '');
             }
         }
     }, [router]);
@@ -235,6 +233,17 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/convites"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                        </svg>
+                                        <span className="text-sm">Convites</span>
                                     </Link>
                                 </li>
                                 <li>

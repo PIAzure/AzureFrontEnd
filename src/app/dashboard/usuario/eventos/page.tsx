@@ -11,10 +11,10 @@ export default function Page() {
     const [error, setError] = useState<string | null>(null);
     const [events, setEvents] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedEvent, setSelectedEvent] = useState<any>(null); // Armazena o evento selecionado
+    const [selectedEvent, setSelectedEvent] = useState<any>(null);
     const eventsPerPage = 6;
     const [horarios, setHorarios] = useState([]);
-    const [selectedHorary, setSelectedHorary] = useState<number | null>(null);  // Pode ser um número ou null
+    const [selectedHorary, setSelectedHorary] = useState<number | null>(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const router = useRouter();
 
@@ -64,15 +64,13 @@ export default function Page() {
     };
     
     const handleInscreverParticipante = async (eventId: number) => {
-        const user = JSON.parse(localStorage.getItem('user') || '{}'); // Buscando os dados do usuário
-    
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email;
         if (!userEmail) {
             alert('Não foi possível obter o email do usuário.');
             return;
         }
     
-        // Verificar se o usuário já está inscrito no evento
         try {
             const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
@@ -81,7 +79,6 @@ export default function Page() {
     
             const checkData = await checkResponse.json();
     
-            // Verificar se o evento já está na lista de inscrições do usuário
             const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
     
             if (isAlreadyRegistered) {
@@ -90,15 +87,14 @@ export default function Page() {
                 return;
             }
     
-            // Caso o usuário não esteja inscrito, proceder com a inscrição
             const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    user: userEmail,  // Enviando o email do usuário
-                    event: eventId    // Enviando o ID do evento
+                    user: userEmail,
+                    event: eventId
                 }),
             });
     
@@ -131,7 +127,7 @@ export default function Page() {
 
     const openModal = (event: any) => {
         setSelectedEvent(event);
-        fetchHorarios(event.id); // Buscar horários ao abrir o modal
+        fetchHorarios(event.id);
         setIsModalOpen(true);
     };
     
@@ -142,8 +138,8 @@ export default function Page() {
     };
 
     const openConfirmModal = (horaryId: number) => {
-        setSelectedHorary(horaryId);  // Salva o ID do horário selecionado
-        setIsConfirmModalOpen(true);  // Abre o modal de confirmação
+        setSelectedHorary(horaryId);
+        setIsConfirmModalOpen(true);
     };
 
     const closeConfirmModal = () => {
@@ -153,7 +149,7 @@ export default function Page() {
     const handleConfirmRegistration = () => {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = userData?.email;
-        const horaryId = selectedHorary;    // O ID do horário que foi selecionado
+        const horaryId = selectedHorary;
         console.log(userEmail);
         console.log(horaryId);
 
@@ -169,8 +165,7 @@ export default function Page() {
             return;
         }
 
-        // URL para verificar se o usuário já está registrado para este evento e horário
-        const scaleUrl = `http://127.0.0.1:8000/scale/3/`;  // Use o ID do evento específico aqui
+        const scaleUrl = `http://127.0.0.1:8000/scale/3/`;
 
 
         const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
@@ -187,8 +182,8 @@ export default function Page() {
                 closeConfirmModal();
             }
             alert('Cadastro realizado com sucesso!');
-            closeConfirmModal(); // Fechar o modal de confirmação após a inscrição
-            closeModal(); // Fechar o modal do evento
+            closeConfirmModal();
+            closeModal();
         })
         .catch((error) => {
             console.error(error);
@@ -294,6 +289,17 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
+                                        href="/dashboard/usuario/convites"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                        </svg>
+                                        <span className="text-sm">Convites</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/dashboard/usuario/configuracoes"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
@@ -331,7 +337,7 @@ export default function Page() {
                     <p className="text-flex text-red-500">{error}</p>
                 ) : (
                     <>
-                        <div className="p-8">
+                        <div className="p-8 mx-auto max-w-7xl">
                             <div className="grid grid-cols-3 grid-rows-2 gap-4">
                                 {currentEvents.map((event: any) => (
                                     <a
@@ -374,7 +380,7 @@ export default function Page() {
                                                         className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
                                                         onClick={(e) => {
                                                             e.preventDefault();
-                                                            handleInscreverParticipante(event.id); // Passa o ID do evento ao clicar
+                                                            handleInscreverParticipante(event.id);
                                                         }}
                                                     >
                                                         <svg
@@ -397,7 +403,7 @@ export default function Page() {
                                                     className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
                                                     onClick={(e) => {
                                                         e.preventDefault();
-                                                        openModal(event); // Abre o modal com o evento selecionado
+                                                        openModal(event);
                                                     }}
                                                 >
                                                     <svg
@@ -495,29 +501,29 @@ export default function Page() {
                 ) : (
                     <p className="text-gray-600"><strong>Nenhum horário disponível para este evento.</strong></p>
                 )}
-                {/* Modal de confirmação */}
-            {isConfirmModalOpen && (
-                <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
-                    <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                        <p className="text-lg font-bold">Tem certeza que deseja se cadastrar nesse horário?</p>
-                        <div className="flex justify-end mt-4 space-x-4">
-                            <button
-                                className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
-                                onClick={closeConfirmModal}
-                            >
-                                Não
-                            </button>
-                            <button
-                                className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-                                onClick={handleConfirmRegistration}
-                            >
-                                Sim
-                            </button>
+
+                {isConfirmModalOpen && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                            <p className="text-lg font-bold">Tem certeza que deseja se cadastrar nesse horário?</p>
+                            <div className="flex justify-end mt-4 space-x-4">
+                                <button
+                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                    onClick={closeConfirmModal}
+                                >
+                                    Não
+                                </button>
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                    onClick={handleConfirmRegistration}
+                                >
+                                    Sim
+                                </button>
+                            </div>
                         </div>
                     </div>
+                )}
                 </div>
-            )}
-            </div>
                     </div>
                 </div>
             )}

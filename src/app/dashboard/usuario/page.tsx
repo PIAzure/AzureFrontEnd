@@ -116,6 +116,17 @@ export default function Page() {
                                     </Link>
                                 </li>
                                 <li>
+                                    <Link
+                                        href="/dashboard/usuario/convites"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                        </svg>
+                                        <span className="text-sm">Convites</span>
+                                    </Link>
+                                </li>
+                                <li>
                                     <a
                                         href="/dashboard/usuario/configuracoes"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"

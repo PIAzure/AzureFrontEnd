@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
@@ -22,14 +21,13 @@ export default function Page() {
             setUserData(JSON.parse(storedUserData));
         }
 
-        // Recuperando eventos do participante logado
         if (storedUserData) {
             const userEmail = JSON.parse(storedUserData).email;
             const fetchEvents = async () => {
                 try {
                     const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
                     const data = await response.json();
-                    setEvents(data); // Armazenando os eventos na state
+                    setEvents(data);
                 } catch (error) {
                     console.error("Erro ao buscar os eventos:", error);
                 }
@@ -48,7 +46,7 @@ export default function Page() {
     
             if (response.ok) {
                 alert('Inscrição cancelada com sucesso!');
-                setEvents(events.filter(event => event.id !== registrationId)); // Atualiza os eventos removendo a inscrição cancelada
+                setEvents(events.filter(event => event.id !== registrationId));
             } else {
                 alert('Erro ao cancelar a inscrição.');
             }
@@ -164,6 +162,17 @@ export default function Page() {
                                     </Link>
                                 </li>
                                 <li>
+                                    <Link
+                                        href="/dashboard/usuario/convites"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                        </svg>
+                                        <span className="text-sm">Convites</span>
+                                    </Link>
+                                </li>
+                                <li>
                                     <a
                                         href="/dashboard/usuario/configuracoes"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
@@ -225,13 +234,12 @@ export default function Page() {
                                     </p>
                                 </div>
 
-                                {/* Botão à direita */}
                                 <div className="mt-10">
                                     <button
                                         className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
                                         onClick={() => handleCancelRegistration(event.id)}
                                     >
-                                        <i className="fas fa-times mr-2"></i> {/* Ícone de cancelar */}
+                                        <i className="fas fa-times mr-2"></i>
                                         Cancelar Participação
                                     </button>
                                 </div>
