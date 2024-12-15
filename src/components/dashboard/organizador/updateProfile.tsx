@@ -8,6 +8,7 @@ interface IProps {
     isOpen: Function
 }
 export function UpdateProfile({ isOpen }: IProps) {
+    const url= process.env.NEXT_PUBLIC_BE_URL;
     const [dados, setDados] = useState({ nome: '', senha: '', email: '', confirmSenha: '', foto: '' });
     const [showPassword, setShowPassword] = useState({ senha: false, confirmSenha: false });
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
@@ -155,9 +156,9 @@ export function UpdateProfile({ isOpen }: IProps) {
             const email = userObj.email;
             setDados((prevEvent) => ({
                 ...prevEvent,
-                foto: `http://127.0.0.1:8000${userObj.imagefield}`, // Atualiza o campo específico do estado
+                foto: `${url}${userObj.imagefield}`, // Atualiza o campo específico do estado
             }));
-            setPreviewSrc(`http://127.0.0.1:8000${userObj.imagefield}`)
+            setPreviewSrc(`${url}${userObj.imagefield}`)
             setDados((prevEvent) => ({
                 ...prevEvent,
                 nome: userObj.name, // Atualiza o campo específico do estado

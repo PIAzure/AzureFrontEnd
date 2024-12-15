@@ -20,12 +20,13 @@ export default function Page() {
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        const url= process.env.NEXT_PUBLIC_BE_URL;
         e.preventDefault();
         setErrorMessage(null);
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/users/token', {
+            const response = await fetch(`${url}/users/token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -33,6 +33,7 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
     };
 
     const updateEvent = async () => {
+        const url= process.env.NEXT_PUBLIC_BE_URL;
         const formData = new FormData();
         formData.append('name', user.nome);
         formData.append('password', user.senha);
@@ -43,7 +44,7 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
         }
 
         if (user.foto.includes('/media/banners/')) {
-            const imageUrl = `http://127.0.0.1:8000${user.foto}`;
+            const imageUrl = `${url}${user.foto}`;
     
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -65,7 +66,7 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
     
     
         try {
-            const response = await fetch(`http://127.0.0.1:8000/users/${user.email}/`, {
+            const response = await fetch(`${url}/users/${user.email}/`, {
                 method: 'PUT', 
                 body: formData,
             });

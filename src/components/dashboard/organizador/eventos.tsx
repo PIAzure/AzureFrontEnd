@@ -7,7 +7,7 @@ import { PopUpDelete } from './popUpDelete';
 
 export function Eventos() {
     const [popUpDelete, setDelete] = useState(false)
-    const urlBE = 'http://127.0.0.1:8000'
+    const url = process.env.NEXT_PUBLIC_BE_URL;
     const [eventoSelecionado, setEvento] = useState<IEvent | null>(null)
     const [formCadastro, setFormCadastro] = useState(false);
     const [updateCadastro, setUpdateCadastro] = useState(false);
@@ -40,45 +40,45 @@ export function Eventos() {
             console.log('Usuário encontrado no localStorage:', user);
             const userObj = JSON.parse(user);
             const email = userObj.email;
-            
-            fetch(`http://127.0.0.1:8000/events/${email}/`, {
+
+            fetch(`${url}/events/event/organizator/${email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
             })
-            .then((response) => {
-                console.log('Resposta bruta:', response);
-                return response.text(); // Alterado para text() para inspecionar o conteúdo
-            })
-            .then((data) => {
-                console.log('Resposta do servidor:', data);
-                // Converta o texto para JSON somente se for válido
-                try {
-                    const jsonData = JSON.parse(data);
-                    setData(jsonData);
-                } catch (error) {
-                    console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
-                }
-            })
-            .catch((err) => console.error('Erro no fetch:', err));
+                .then((response) => {
+                    console.log('Resposta bruta:', response);
+                    return response.text(); // Alterado para text() para inspecionar o conteúdo
+                })
+                .then((data) => {
+                    console.log('Resposta do servidor:', data);
+                    // Converta o texto para JSON somente se for válido
+                    try {
+                        const jsonData = JSON.parse(data);
+                        setData(jsonData);
+                    } catch (error) {
+                        console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
+                    }
+                })
+                .catch((err) => console.error('Erro no fetch:', err));
         }
     }, [popUpDelete, updateCadastro]);
-    
+
 
     return (
         <section className='relative  w-full py-[40px] md:py-[60px] px-padrao'>
-            <div className='flex max-w-padrao mx-auto mb-[30px]'>
-                <h2 className='text-18px font-bold '>Veja todos os seus eventos cadastrados</h2>
-                <div
-                    onClick={() => { setFormCadastro(true) }}
-                    className="mb-[30px] ml-auto cursor-pointer max-w-[100px] text-center rounded bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
-                >
-                    + Evento
-                </div>
-            </div>
             {
                 formCadastro == false && updateCadastro == false && view == false ?
                     <div className='w-full'>
+                        <div className='flex max-w-padrao mx-auto mb-[30px]'>
+                            <h2 className='text-18px font-bold '>Veja todos os seus eventos cadastrados</h2>
+                            <div
+                                onClick={() => { setFormCadastro(true) }}
+                                className="mb-[30px] ml-auto cursor-pointer max-w-[100px] text-center rounded bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+                            >
+                                + Evento
+                            </div>
+                        </div>
                         {data != null ?
                             <div className='w-full flex flex-wrap gap-4'>
                                 {
@@ -89,18 +89,18 @@ export function Eventos() {
 
 
                                                     <img
-                                                        src={`${urlBE}${evento.banner}`}
+                                                        src={`${url}${evento.banner}`}
                                                         alt=""
                                                         className="h-80 w-full rounded-bl-3xl rounded-tr-3xl border border-gray-300 object-cover"
                                                     />
 
                                                     <div className="p-4">
-                                                        <svg onClick={() => { setView(true),setEvento(evento) }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                                        <svg onClick={() => { setView(true), setEvento(evento) }} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
                                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                                         </svg>
                                                         <div className='mb-[30px]'>
-                                                            <h2>Data: {formateData(evento.timeDate)}</h2>
+                                                            <h2>Data: {formateData(evento.begin)}</h2>
                                                             <h2>Local: {evento.location}</h2>
                                                             <p>Descrição: {evento.description}</p>
                                                         </div>
@@ -145,8 +145,8 @@ export function Eventos() {
                     <FormUpdateEvento isOpen={isOpenUpdateCadastro} evento={eventoSelecionado} /> : null
             }
             {
-                view && eventoSelecionado!=null ?
-                    <View isOpen={isOpenView} evento={eventoSelecionado}/> : null
+                view && eventoSelecionado != null ?
+                    <View isOpen={isOpenView} evento={eventoSelecionado} /> : null
             }
             {
                 popUpDelete && eventoSelecionado ?

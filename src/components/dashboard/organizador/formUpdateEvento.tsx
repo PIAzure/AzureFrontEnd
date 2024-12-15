@@ -7,17 +7,29 @@ interface IProps {
     evento: IEvent
 }
 export function FormUpdateEvento({ isOpen, evento }: IProps) {
-    const [popUppdateEvent, setPopUpUpdateEvent] = useState(false)
+    const [popUppdateEvent, setPopUpUpdateEvent] = useState(false);
+    const url = process.env.NEXT_PUBLIC_BE_URL;
     const [event, setEvent] = useState<IEvent>({
         description: evento?.description,
         location: evento.location,
-        timeDate: evento.timeDate,
-        banner: `http://127.0.0.1:8000${evento.banner}`,
+        begin: evento.begin,
+        banner: `${url}${evento.banner}`,
         organizator: "teste2111@gmail.com",
         id: evento.id,
+        max_particpant: evento?.max_particpant,
+        max_voluntary_per_horary: evento.max_particpant,
+        end: evento.end,
+        escale: convertToTime(evento.escale),
+        bscale: convertToTime(evento.bscale)
     });
+    function convertToTime(dateTime: string): string {
+        const date = new Date(dateTime);
+        const hours = date.getHours().toString().padStart(2, '0'); // Obtém as horas e adiciona um zero à esquerda, se necessário
+        const minutes = date.getMinutes().toString().padStart(2, '0'); // Obtém os minutos e adiciona um zero à esquerda, se necessário
+        return `${hours}:${minutes}`; // Retorna no formato HH:mm
+    }
     const [listaCronograma, setListaCronograma] = useState();
-    const [previewSrc, setPreviewSrc] = useState<string | null>(`http://127.0.0.1:8000${evento.banner}`);
+    const [previewSrc, setPreviewSrc] = useState<string | null>(`${url}${evento.banner}`);
 
     const dataURLtoFile = (dataurl: string, filename: string) => {
         const arr = dataurl.split(',');
@@ -101,11 +113,14 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
         return formattedDate
     }
 
-    function isOpenUpdateCadastro() {
+    function isOpenUpdateCadastro(status:string) {
         setPopUpUpdateEvent(false)
+        if(status=='atualizado'){
+            isOpen()
+        }
     }
 
-    useEffect(()=>{
+    useEffect(() => {
         const user = localStorage.getItem('user');
         if (user) {
             console.log('Usuário encontrado no localStorage:', user);
@@ -116,7 +131,7 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
                 organizator: email, // Atualiza o campo específico do estado
             }));
         }
-    },[])
+    }, [])
 
     return (
         <section className='px-[20px] bg-[#ffffff]'>
@@ -208,7 +223,27 @@ export function FormUpdateEvento({ isOpen, evento }: IProps) {
                         </div>
                         <div className='mb-[12px]'>
                             <label htmlFor="data_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Data do evento:</label>
-                            <input value={dataInput(event.timeDate)} onChange={handleInputChange} type="date" name="timeDate" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <input value={dataInput(event.begin)} onChange={handleInputChange} type="date" name="timeDate" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Data de encerramento:</label>
+                            <input value={dataInput(event.end)} onChange={handleInputChange} type="date" name="end" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Horário que o evento se inicia:</label>
+                            <input onChange={handleInputChange} value={event.bscale} type="time" name="bscale" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Horário que o evento se encerra:</label>
+                            <input value={event.escale} onChange={handleInputChange} type="time" name="escale" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="max_particpant" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantidade máxima de participantes:</label>
+                            <input value={event.max_particpant} onChange={handleInputChange} type="number" name="max_particpant" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="max_voluntary_per_horary" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantidade máxima de voluntários por escalas de horas:</label>
+                            <input value={event.max_voluntary_per_horary} onChange={handleInputChange} type="number" name="max_voluntary_per_horary" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
                         {/* <div className='mb-[12px]'>
                             <label htmlFor="termino_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Termino do evento:</label>
