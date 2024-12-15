@@ -47,13 +47,14 @@ export default function Page() {
                 data.map(async (invite: any) => {
                     const eventDetails = await fetchEventDetails(invite.event);
                     if (eventDetails) {
+                        const organizerName = await fetchOrganizerName(eventDetails.organizator);
                         return {
                             ...invite,
                             eventDetails: {
                                 ...eventDetails,
-                                begin: new Date(eventDetails.begin).toLocaleString(),
-                                end: new Date(eventDetails.end).toLocaleString(),
-                                organizer: eventDetails.organizer || 'Desconhecido',
+                                data,
+                                organizer: organizerName || 'Desconhecido',
+                                
                             }
                         };
                     } else {
@@ -61,7 +62,6 @@ export default function Page() {
                     }
                 })
             );
-
             setInvites(updatedInvites);
         } catch (error) {
             console.error(error);
@@ -85,8 +85,29 @@ export default function Page() {
 
             return await response.json();
         } catch (error) {
-            console.error(`Erro ao buscar detalhes do evento ${event}`, error);
+            console.error(`Erro ao buscar detalhes do evento`, error);
             return null;
+        }
+    };
+
+    const fetchOrganizerName = async (organizerEmail: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar nome do organizador');
+            }
+
+            const data = await response.json();
+            return data.users?.name || 'Desconhecido';
+        } catch (error) {
+            console.error('Erro ao buscar nome do organizador', error);
+            return 'Desconhecido';
         }
     };
 
@@ -130,13 +151,6 @@ export default function Page() {
         } catch (error) {
             console.error(error);
         }
-    };
-    
-
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        router.push('/auth/usuario');
     };
     
     return (
@@ -221,7 +235,7 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="#"
+                                        href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
@@ -287,8 +301,8 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
-                <div className="p-6">
+            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
+                <div className="p-6 overflow-y-auto">
                         {loading ? (
                             <p>Carregando convites...</p>
                         ) : invites.length > 0 ? (
@@ -300,21 +314,29 @@ export default function Page() {
                                 >
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <h3 className="text-lg font-bold">{invite.eventName}</h3>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Descrição:</strong> {invite.eventDetails?.description || 'Sem Descrição'}
+                                            <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                                <p><strong>Evento:</strong></p>
+                                            </h2>
+                                            <p className="text-xs sm:text-sm font-semibold mb-1">
+                                            <strong>{invite.eventDetails?.description || 'Sem Descrição'}</strong>
                                             </p>
                                             <p className="text-sm text-gray-600">
                                                 <strong>Localização:</strong> {invite.eventDetails?.location || 'Sem Localização'}
                                             </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Organizador:</strong> {invite.eventDetails?.organizator || 'Desconhecido'}
+                                            <p>
+                                            <strong>Data de Início:</strong> 
+                                            {new Date(invite.eventDetails?.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} 
+                                                <strong> Horário: </strong>
+                                                {new Date(invite.eventDetails?.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
                                             </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Data de Início:</strong> {invite.eventDetails?.begin?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.begin?.split(',')[1]?.trim() || 'Não informado'}
+                                            <p >
+                                                <strong>Data de Término: </strong>
+                                                {new Date(invite.eventDetails?.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                                <strong> Horário: </strong>
+                                                {new Date(invite.eventDetails?.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
                                             </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Data de Término:</strong> {invite.eventDetails?.end?.split(',')[0]} <strong>Horário:</strong> {invite.eventDetails?.end?.split(',')[1]?.trim() || 'Não informado'}
+                                            <p className="mt-2 text-xs sm:text-sm">
+                                                <strong>Convite enviado pelo organizador:</strong> {invite.eventDetails?.organizer || 'Desconhecido'}
                                             </p>
                                         </div>
                                         <div className="flex space-x-2">
@@ -335,7 +357,19 @@ export default function Page() {
                                 </article>
                             ))
                         ) : (
-                            <p>Você não tem convites disponíveis.</p>
+                            <div
+                                className="flex-1 bg-white text-black"
+                                style={{
+                                    marginTop: '-5rem',
+                                    overflow: 'auto',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    height: '100vh',
+                                }}
+                                >
+                                <strong><p>Você não tem convites disponíveis.</p></strong>
+                            </div>
                         )}
                     </div>              
             </div>

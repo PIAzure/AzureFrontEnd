@@ -8,8 +8,14 @@ import Link from 'next/link';
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
-    const router = useRouter();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [horarios, setHorarios] = useState<any[]>([]);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+    const [selectedHoraryId, setSelectedHoraryId] = useState<number | null>(null);
+    const [selectedVoluntaryId, setSelectedVoluntaryId] = useState<number | null>(null);
+    const router = useRouter();
+    
     useEffect(() => {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -29,9 +35,12 @@ export default function Page() {
     
                 const userEmail = userData?.email;
     
-                const updatedEvents = await Promise.all(eventsData.map(async (event: any) => {
+                const updatedEvents = await Promise.all(
+                    eventsData.map(async (event: any) => {
                     const responseScale = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
                     const scaleData = await responseScale.json();
+                    
+                    const organizerName = await fetchOrganizerName(event.organizator);
 
                     if (scaleData && Array.isArray(scaleData[0]?.horarys)) {
                         const isUserRegistered = scaleData[0].horarys.some((hour: any) =>
@@ -41,6 +50,8 @@ export default function Page() {
                         return {
                             ...event,
                             registered: isUserRegistered,
+                            scaleData,
+                            organizer: organizerName || 'Desconhecido',
                         };
                     }
     
@@ -58,60 +69,91 @@ export default function Page() {
         fetchEventDetails();
 
     }, [userData?.email]);
-    
-    const cancelRegistration = async (eventId: number) => {
+
+    const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const getResponse = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
-    
-            if (!getResponse.ok) {
-                throw new Error(`Erro ao buscar informações do evento: ${getResponse.statusText}`);
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar nome do organizador');
             }
-    
-            const eventData = await getResponse.json();
-    
-            console.log("eventData:", eventData);
-    
-            let voluntaryId: number | null = null;
-    
-            eventData.forEach((scale: any) => {
-                scale.horarys.forEach((horary: any) => {
-                    if (horary.voluntarys && horary.voluntarys.length > 0) {
-                        voluntaryId = horary.voluntarys[0].id;
-                    }
+
+            const data = await response.json();
+            return data.users?.name || 'Desconhecido';
+        } catch (error) {
+            console.error('Erro ao buscar nome do organizador', error);
+            return 'Desconhecido';
+        }
+    };
+
+    const cancelRegistration = async (horaryId: number, voluntaryId: number) => {
+        console.log("ID do Horário: ",horaryId);
+        console.log("ID do Voluntário: ", voluntaryId);
+            try {
+                const deleteUrl = `http://127.0.0.1:8000/scale/${horaryId}/delete/${voluntaryId}/`;
+        
+                const deleteResponse = await fetch(deleteUrl, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
                 });
-            });
-    
-            if (!voluntaryId) {
-                throw new Error('Nenhum voluntário encontrado para este evento.');
-            }
-    
-            console.log("voluntaryId:", voluntaryId);
-    
-            const deleteResponse = await fetch(`http://127.0.0.1:8000/scale/${voluntaryId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (deleteResponse.ok) {
-                alert('Inscrição cancelada com sucesso!');
-                setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId));
+                
+                if (deleteResponse.ok) {
+                    alert('Inscrição cancelada com sucesso!');
+
+                setEvents((prevEvents) =>
+                    prevEvents
+                        .map((event) => ({
+                            ...event,
+                            scaleData: event.scaleData.map((scale: any) => ({
+                                ...scale,
+                                horarys: scale.horarys.filter((hour: any) => hour.id !== horaryId),
+                            })),
+                        }))
+                        .filter((event) => 
+                            event.scaleData.some((scale: any) => scale.horarys.some((hour: any) => hour.voluntarys.length > 0))
+                        )
+                );
+
+                setHorarios((prevHorarios) =>
+                    prevHorarios.filter((horario) => horario.id !== horaryId)
+                );
+
+                closeConfirmModal();
+                closeModal();
             } else {
                 throw new Error(`Erro ao cancelar inscrição: ${deleteResponse.statusText}`);
             }
         } catch (error) {
-            console.error('Erro:', error instanceof Error ? error.message : error);
+            console.error('Erro ao cancelar inscrição:', error instanceof Error ? error.message : error);
         }
     };
-    
-    
+    const openModal = (horarios: any[]) => {
+        setHorarios(horarios);
+        setIsModalOpen(true);
+    };
 
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+    
+    const openConfirmModal = (horaryId: number, volunteerId: number) => {
+        setSelectedHoraryId(horaryId);
+        setSelectedVoluntaryId(volunteerId);
+        setIsConfirmModalOpen(true);
+        closeModal();
+    };
+
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
+        openModal(horarios);
+    };
 
     const baseUrl = "http://127.0.0.1:8000";
 
@@ -263,42 +305,69 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem' }}>
-                <div className="p-6">
+            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
+                <div className="p-6 overflow-y-auto">
                     {events.length > 0 ? (
                         events.map((event: any, index: number) => (
                             <article
                                 key={index}
                                 className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
                             >
-                                <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
-                                    <div className="flex-1 pr-4 text-sm text-gray-600">
-                                        <h2 className="text-lg font-semibold mb-2">
-                                            <strong>{event.description}</strong>
-                                        </h2>
-                                        <p><strong>Localização:</strong> {event.location}</p>
-                                        <p><strong>Organizador:</strong> {event.organizator}</p>
-                                        <p>
-                                            <strong>Data de Início: </strong>
-                                            {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                            <strong> Horário: </strong>
-                                            {new Date(event.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                        </p>
-                                        <p>
-                                            <strong>Data de Término: </strong>
-                                            {new Date(event.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                            <strong> Horário: </strong>
-                                            {new Date(event.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                        </p>
+                                <div className="rounded-[10px] bg-white p-2 sm:p-4 flex flex-col sm:flex-row justify-between ">
+                                    <div className="rounded-[10px] bg-white p-2 sm:p-4 flex flex-col sm:flex-row justify-between">
+                                        <div className="flex-1 pr-4 text-xs sm:text-sm text-gray-600">
+                                            <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                                <p><strong>Evento:</strong></p>
+                                            </h2>
+                                            <h2 className="text-xs sm:text-sm font-semibold mb-1">
+                                                <strong>{event.description}</strong>
+                                            </h2>
+                                            <p className="text-xs sm:text-sm">
+                                                <strong>Localização:</strong> {event.location}
+                                            </p>
+                                            <p className="text-xs sm:text-sm">
+                                                <strong>Data de Início do Evento: </strong>
+                                                {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                                <strong> Horário do Evento: </strong>
+                                                {new Date(event.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
+                                            </p>
+                                            <p className="text-xs sm:text-sm">
+                                                <strong>Data de Término do Evento: </strong>
+                                                {new Date(event.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                                <strong> Horário do Evento: </strong>
+                                                {new Date(event.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
+                                            </p>
+                                            <p className="mt-2 text-xs sm:text-sm">
+                                                <strong>Organizador do Evento:</strong> {event.organizer}
+                                            </p>
+                                            <h2 className="mt-2 text-sm sm:text-lg font-semibold mb-1">
+                                                <p><strong>Detalhes da Sua Inscrição:</strong></p>
+                                            </h2>
+                                            {event.scaleData && event.scaleData[0]?.horarys.map((hour: any) => {
+                                                const volunteerHour = hour.voluntarys.find((voluntary: any) => voluntary.user.email === userData?.email);
+                                                if (volunteerHour) {
+                                                    const formattedDate = new Date(hour.datetime).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                                                    const formattedTime = new Date(hour.datetime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+
+                                                    return (
+                                                        <div key={hour.id} className="mt-2 text-xs sm:text-sm">
+                                                            <p><strong>Data do Voluntariado:</strong> {formattedDate}</p>
+                                                            <p><strong>Horário do Voluntariado:</strong> {formattedTime}</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            })}
+                                        </div>
                                     </div>
 
-                                    <div className="mt-10">
+                                    <div className="mt-28 ">
                                         <button
-                                            className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
-                                            onClick={() => cancelRegistration(event.id)}
+                                            className="px-4 py-2 text-sm font-medium text-white bg-gray rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
+                                            onClick={() => openModal(event.scaleData[0]?.horarys || [])}
                                             >
-                                            <i className="fas fa-times mr-2"></i>
-                                            Cancelar Inscrição
+                                            <i className="fas fa-times mr-2  "></i>
+                                            Gerenciar Inscrições
                                         </button>
                                     </div>
                                 </div>
@@ -310,6 +379,88 @@ export default function Page() {
                         </div>
                     )}
                 </div>
+                    {isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl p-8 h-[600px]">
+                            <div className="flex justify-between items-center border-b pb-4 text-gray">
+                                <h2 className="text-2xl text-red-500 font-bold">Cancelar Agendamento da Inscrição</h2>
+                                <button className="text-red-500 font-bold hover:text-gray-700" onClick={closeModal}>✕</button>
+                            </div>
+
+                            <div className="mt-4 space-y-4 max-h-[400px] overflow-y-auto">
+                            {horarios.length > 0 ? (
+                                horarios.map((horario: any) => {
+                                    const datetime = new Date(horario.datetime);
+                                    const formattedDate = datetime.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+                                    const formattedTime = datetime.toLocaleTimeString('pt-BR', {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                        hour12: false,
+                                        timeZone: 'UTC',
+                                    });
+
+                                    const volunteer = horario.voluntarys.find((voluntary: any) => voluntary.user.email === userData?.email);
+
+                                    if (volunteer) {
+                                        return (
+                                            <div key={horario.id} className="p-4 bg-gray-100 rounded shadow border border-gray flex justify-between items-center">
+                                                <div>
+                                                    <p className="max-w-xs truncate text-xs sm:text-sm font-semibold mb-1">
+                                                        <strong>Inscrição:</strong>
+                                                    </p>
+                                                    <p className="max-w-xs truncate">
+                                                        <strong>Data do Voluntariado:</strong> {formattedDate}
+                                                    </p>
+                                                    <p className="max-w-xs truncate">
+                                                        <strong>Horário do Voluntariado:</strong> {formattedTime}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    className="bg-blue text-white py-2 px-4 rounded hover:bg-blue-600"
+                                                    onClick={() => openConfirmModal(horario.id, volunteer.id)}
+                                                >
+                                                    Selecionar
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })
+                            ) : (
+                                <p className="text-gray-600"><strong>Nenhum horário disponível para este evento.</strong></p>
+                            )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isConfirmModalOpen && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                            <p className="text-lg font-bold">Tem certeza que deseja cancelar a inscrição para o horário selecionado?</p>
+                            <div className="flex justify-end mt-4 space-x-4">
+                                <button
+                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                    onClick={closeConfirmModal}
+                                >
+                                    Não
+                                </button>
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                    onClick={() => {
+                                        if (selectedHoraryId !== null && selectedVoluntaryId !== null) {
+                                            cancelRegistration(selectedHoraryId, selectedVoluntaryId);
+                                        } else {
+                                            alert('Por favor, selecione um horário e um voluntário.');
+                                        }
+                                    }}
+                                >
+                                    Sim
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 </div>
         </div>
     );
