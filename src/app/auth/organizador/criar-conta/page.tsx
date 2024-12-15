@@ -18,6 +18,7 @@ const [sucess,setSucess]= useState(false);
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        const url= process.env.NEXT_PUBLIC_BE_URL;
         e.preventDefault();
         setSenhaError(null);
 
@@ -43,7 +44,7 @@ const [sucess,setSucess]= useState(false);
         }
 
         try {
-            const response = await fetch('http://127.0.0.1:8000/organization/', {
+            const response = await fetch(`${url}/organization/`, {
                 method: 'POST',
                 body: formData,
             });

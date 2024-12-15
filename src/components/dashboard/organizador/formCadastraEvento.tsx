@@ -7,12 +7,18 @@ interface IProps {
     isOpen: Function
 }
 export function FormCadastraEvento({ isOpen }: IProps) {
-    const [popUppdateEvent, setPopUpUpdateEvent] = useState(false)
+    const [popUppdateEvent, setPopUpUpdateEvent] = useState(false);
+    const [alert,setAlert]= useState('');
     const [event, setEvent] = useState<Partial<IEvent>>({
         description: '',
         location: '',
-        timeDate: '',
+        begin: '',
+        max_particpant: '0',
+        max_voluntary_per_horary: '0',
         banner: '',
+        end: '',
+        bscale:'',
+        escale:'',
         organizator: "teste2111@gmail.com",
     });
     const [listaCronograma, setListaCronograma] = useState();
@@ -60,12 +66,12 @@ export function FormCadastraEvento({ isOpen }: IProps) {
         if (!file) return;
 
         if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
-            alert('Formato inválido!/nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
+            setAlert('Formato inválido!/nPor favor, envie um arquivo de imagem (PNG, JPEG, ou GIF).');
             return;
         }
 
         if (file.size > maxFileSize) {
-            alert('Tamanho inválido!/nO tamanho máximo permitido é até 10MB.');
+            setAlert('Tamanho inválido!/nO tamanho máximo permitido é até 10MB.');
             return;
         }
 
@@ -99,7 +105,10 @@ export function FormCadastraEvento({ isOpen }: IProps) {
         return formattedDate
     }
 
-    function isOpenUpdateCadastro() {
+    function isOpenUpdateCadastro(result:string) {
+        if (result=='criado') {
+            isOpen() 
+        }
         setPopUpUpdateEvent(false)
     }
 
@@ -114,7 +123,7 @@ export function FormCadastraEvento({ isOpen }: IProps) {
                 organizator: email, // Atualiza o campo específico do estado
             }));
         }
-    },[])
+    }, [])
 
     return (
         // <section className=' px-[20px] top-0 bg-[#ffffff]'>
@@ -372,18 +381,49 @@ export function FormCadastraEvento({ isOpen }: IProps) {
                         </div>
                         <div className='mb-[12px]'>
                             <label htmlFor="data_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Data do evento:</label>
-                            <input onChange={handleInputChange} type="date" name="timeDate" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                            <input onChange={handleInputChange} type="date" name="begin" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Data de encerramento:</label>
+                            <input min={event.begin} onChange={handleInputChange} type="date" name="end" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Horário que o evento se inicia:</label>
+                            <input onChange={handleInputChange} type="time" name="bscale" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="final_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Horário que o evento se encerra:</label>
+                            <input min={event.escale} onChange={handleInputChange} type="time" name="escale" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="max_particpant" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantidade máxima de participantes:</label>
+                            <input onChange={handleInputChange} type="number" name="max_particpant" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
+                        </div>
+                        <div className='mb-[12px]'>
+                            <label htmlFor="max_voluntary_per_horary" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Quantidade máxima de voluntários por escalas de horas:</label>
+                            <input onChange={handleInputChange} type="number" name="max_voluntary_per_horary" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                         </div>
                         {/* <div className='mb-[12px]'>
                         <label htmlFor="termino_evento" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Termino do evento:</label>
                         <input  type="date" name="termino_evento" className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="" required />
                     </div> */}
-                        <div onClick={() => { setPopUpUpdateEvent(true) }} className="w-[48%] text-center text-16px cursor-pointer inline-block rounded bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">
+                    
+                        <div onClick={() => { 
+                            if (event.begin!=''&&event.bscale!=''&&event.description!=''&&event.end!=''&&event.escale!=''&&event.location!=''&&event.max_particpant!="0"&&event.max_voluntary_per_horary!='0') {
+                                setPopUpUpdateEvent(true)
+                            }
+                            else{
+                                setAlert('Verifique se todos os campos preenchidos corretamente.')
+                            }
+                         }} className="w-[48%] text-center text-16px cursor-pointer inline-block rounded bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-700">
                             Criar evento
                         </div>
                     </form>
                 </div>
             </div>
+            {
+
+            }
             {
                 popUppdateEvent ?
                     <PopUpRegisterEvent isOpen={isOpenUpdateCadastro} evento={event} previewSrc={previewSrc} />

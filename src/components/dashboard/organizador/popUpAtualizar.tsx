@@ -25,13 +25,30 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
         return new File([u8arr], filename, { type: mime });
     };
 
+    function convertToDate(time: string): Date {
+        const [hours, minutes] = time.split(':').map(Number); // Extrai as horas e minutos
+        const now = new Date(); // Data atual
+        now.setHours(hours, minutes, 0, 0); // Define as horas e minutos
+        console.log(now.toISOString())
+        return now; // Retorna como um tipo Date
+    }
+
+
     const updateEvent = async () => {
+        const url = process.env.NEXT_PUBLIC_BE_URL;
+        const inicio = convertToDate(evento.bscale)
+        const fim = convertToDate(evento.escale);
         const formData = new FormData();
         formData.append('description', evento.description);
         formData.append('location', evento.location);
-        formData.append('timeDate', evento.timeDate);
+        formData.append('begin', evento.begin);
+        formData.append('end', evento.end);
+        formData.append('max_voluntary_per_horary', evento.max_voluntary_per_horary);
+        formData.append('max_particpant', evento.max_particpant);
         formData.append('organizator', evento.organizator);
-        
+        formData.append('escale', fim.toISOString());
+        formData.append('bscale', inicio.toISOString());
+
         if (!evento.banner.includes('/media/banners/')) {
             const file = dataURLtoFile(evento.banner, 'profile-image.png');  // Transformando a imagem em arquivo
             formData.append('banner', file);  // Enviando o arquivo
@@ -39,45 +56,45 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
 
         if (evento.banner.includes('/media/banners/')) {
             const imageUrl = `${evento.banner}`;
-    
+
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
                 if (!response.ok) {
                     throw new Error("Falha ao carregar a imagem");
                 }
-    
+
                 const blob = await response.blob();  // Converte a resposta em um Blob
-    
+
                 // Agora, converta o Blob em um File
                 const file = new File([blob], 'profile-image.png', { type: blob.type });
-    
+
                 // Anexar o arquivo ao FormData
                 formData.append('banner', file);
             } catch (error) {
                 console.error('Erro ao processar a imagem:', error);
             }
-        } 
-    
-    
+        }
+
+
         try {
-            const response = await fetch(`http://127.0.0.1:8000/events/event/${evento.id}/`, {
-                method: 'PUT', 
+            const response = await fetch(`${url}/events/event/${evento.id}/`, {
+                method: 'PUT',
                 body: formData,
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Failed to update event: ${response.status}`);
             }
-    
+
             const result = await response.json();
             console.log('Event updated successfully:', result);
-            isOpen(); // Fechar o modal ou fazer algo após a atualização
-    
+            isOpen('atualizado'); // Fechar o modal ou fazer algo após a atualização
+
         } catch (error) {
             console.error('Error updating event:', error);
         }
     };
-    
+
     return (
         <div
             className="min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 flex justify-center bg-[#000000a1] items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover"
@@ -91,13 +108,16 @@ export function PopUpdate({ isOpen, evento, previewSrc }: IProps) {
                     <div className="text-center p-5 flex-auto justify-center">
                         <h2 className="text-xl font-bold py-4">Tem certeza que deseja atualizar esse evento?</h2>
                         <p className="text-sm text-gray-500 px-8">
-                            Essa ação é irreversível
+                            Verifique se todas as atualizações foram feitas corretamente.
                         </p>
                     </div>
 
-                    <div className="p-3 mt-2 text-center space-x-4 md:block">
-                        <div onClick={() => { updateEvent() }} className='inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
-                           Atualizar
+                    <div className='flex gap-2 justify-center'>
+                        <div onClick={() => { isOpen() }} className='cursor-pointer inline-block rounded-lg border border-cian px-5 py-3 text-sm font-medium text-cian'>
+                            Cancelar
+                        </div>
+                        <div onClick={() => { updateEvent() }} className='cursor-pointer inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
+                            Atualizar
                         </div>
                     </div>
                 </div>

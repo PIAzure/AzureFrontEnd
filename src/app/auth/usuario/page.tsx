@@ -20,6 +20,7 @@ export default function Page() {
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        const url= process.env.NEXT_PUBLIC_BE_URL;
         e.preventDefault();
         setErrorMessage(null);
         setIsSubmitting(true);

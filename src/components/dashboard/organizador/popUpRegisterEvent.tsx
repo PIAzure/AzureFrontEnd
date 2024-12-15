@@ -24,14 +24,28 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
         }
         return new File([u8arr], filename, { type: mime });
     };
+    function convertToDate(time: string): Date {
+        const [hours, minutes] = time.split(':').map(Number); // Extrai as horas e minutos
+        const now = new Date(); // Data atual
+        now.setHours(hours, minutes, 0, 0); // Define as horas e minutos
+        return now; // Retorna como um tipo Date
+      }
 
     const createEvent = async () => {
-        if (evento.banner && evento.banner !== '' && evento.organizator && evento.organizator !== '' && evento.timeDate && evento.timeDate !== '' && evento.description && evento.description !== '' && evento.location && evento.location !== '') {
+        const url = process.env.NEXT_PUBLIC_BE_URL;
+        if (evento.banner && evento.max_particpant && evento.escale && evento.bscale && evento.max_voluntary_per_horary && evento.banner !== '' && evento.organizator && evento.organizator !== '' && evento.begin && evento.end && evento.description && evento.description !== '' && evento.location && evento.location !== '') {
+            const inicio= convertToDate(evento.bscale)
+            const fim= convertToDate(evento.escale)
             const formData = new FormData();
             formData.append('description', evento.description);
             formData.append('location', evento.location);
-            formData.append('timeDate', evento.timeDate);
+            formData.append('begin', evento.begin);
+            formData.append('end', evento.end);
+            formData.append('max_voluntary_per_horary', evento.max_voluntary_per_horary);
+            formData.append('max_particpant', evento.max_particpant);
             formData.append('organizator', evento.organizator);
+            formData.append('escale', fim.toISOString());
+            formData.append('bscale', inicio.toISOString());
 
             if (!evento.banner.includes('/media/banners/')) {
                 const file = dataURLtoFile(evento.banner, 'profile-image.png');  // Transformando a imagem em arquivo
@@ -39,7 +53,7 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
             }
 
             if (evento.banner.includes('/media/banners/')) {
-                const imageUrl = `http://127.0.0.1:8000${evento.banner}`;
+                const imageUrl = `${url}${evento.banner}`;
 
                 try {
                     const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
@@ -61,7 +75,7 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
 
 
             try {
-                const response = await fetch(`http://127.0.0.1:8000/events/`, {
+                const response = await fetch(`${url}/events/`, {
                     method: 'POST',
                     body: formData,
                 });
@@ -72,7 +86,7 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
 
                 const result = await response.json();
                 console.log('Event updated successfully:', result);
-                isOpen(); // Fechar o modal ou fazer algo após a atualização
+                isOpen('criado'); // Fechar o modal ou fazer algo após a atualização
 
             } catch (error) {
                 console.error('Error updating event:', error);
@@ -93,12 +107,14 @@ export function PopUpRegisterEvent({ isOpen, evento, previewSrc }: IProps) {
                     <div className="text-center p-5 flex-auto justify-center">
                         <h2 className="text-xl font-bold py-4">Tem certeza que deseja criar esse evento?</h2>
                         <p className="text-sm text-gray-500 px-8">
-                            Essa ação é irreversível
+                            Tenha certeza que todas as informações sobre o evento estejam correta.
                         </p>
                     </div>
-
-                    <div className="p-3 mt-2 text-center space-x-4 md:block">
-                        <div onClick={() => { createEvent() }} className='inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
+                    <div className='flex gap-2 justify-center'>
+                        <div onClick={() => { isOpen() }} className='cursor-pointer inline-block rounded-lg border border-cian px-5 py-3 text-sm font-medium text-cian'>
+                            Cancelar
+                        </div>
+                        <div onClick={() => { createEvent() }} className='cursor-pointer inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
                             Criar
                         </div>
                     </div>

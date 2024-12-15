@@ -4,14 +4,14 @@ import React from 'react'
 
 interface IProps {
     isOpen: Function
-    evento: IEvent
+    idVoluntario: string
 }
 
-export function PopUpDelete({ isOpen, evento }: IProps) {
+export function PopUpDeleteVoluntarioEvento({ isOpen, idVoluntario }: IProps) {
     const url= process.env.NEXT_PUBLIC_BE_URL;
-    const deleteEvent = async () => {
+    const deleteVoluntarioEscala = async () => {
         try {
-            const response = await fetch(`${url}/events/event/${evento.id}/`, {
+            const response = await fetch(`${url}/scale/${idVoluntario}/`, {
                 method: 'DELETE', // Método DELETE para remover o evento
                 headers: {
                     'Content-Type': 'application/json',
@@ -44,7 +44,7 @@ export function PopUpDelete({ isOpen, evento }: IProps) {
                     {/* Body */}
                     <div className="text-center p-5 flex-auto justify-center">
 
-                        <h2 className="text-xl font-bold py-4">Tem certeza que deseja deletar esse evento?</h2>
+                        <h2 className="text-xl font-bold py-4">Tem certeza que deseja deletar esse voluntário da escala?</h2>
                         <p className="text-sm text-gray-500 px-8">
                             Essa ação é irreversivél
                         </p>
@@ -54,7 +54,7 @@ export function PopUpDelete({ isOpen, evento }: IProps) {
                         <div onClick={() => { isOpen() }} className='cursor-pointer inline-block rounded-lg border border-cian px-5 py-3 text-sm font-medium text-cian'>
                             Cancelar
                         </div>
-                        <div onClick={() => { deleteEvent() }} className='cursor-pointer inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
+                        <div onClick={() => { deleteVoluntarioEscala() }} className='cursor-pointer inline-block rounded-lg bg-cian px-5 py-3 text-sm font-medium text-white'>
                             Deletar
                         </div>
                     </div>
