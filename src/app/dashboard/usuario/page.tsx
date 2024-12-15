@@ -33,7 +33,7 @@ export default function Page() {
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold items-center">Bem-vindo à Azure!</h1>
+                    <h1 className="text-lg font-semibold items-center">Página Inicial</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -182,7 +182,22 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
+            <div className="flex-1 overflow-hidden" style={{ marginTop: '4rem' }}>
+                <section className="bg-light-gray text-white">
+                    <div className="mx-auto max-w-screen-xl px-4 py-32 lg:flex h-screen lg:items-center ">
+                        <div className="mx-auto max-w-3xl text-center h-64">
+                            <h1
+                                className="bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 bg-clip-text text-3xl font-extrabold text-transparent sm:text-5xl"
+                            >
+                                Bem-vindo ao Azure!
+                            </h1>
+
+                            <p className="mx-auto mt-4 max-w-xl sm:text-xl text-black">
+                                Conecte-se a eventos incríveis, contribua como voluntário ou participe como convidado. Faça parte da nossa comunidade.
+                            </p>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );

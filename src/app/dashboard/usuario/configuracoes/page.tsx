@@ -11,10 +11,24 @@ export default function Page() {
     const [previewSrc, setPreviewSrc] = useState<string | null>(null);
     const [senhaError, setSenhaError] = useState<string | null>(null);
     const router = useRouter();
-
-    const token = localStorage.getItem('authToken');
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const email = user?.email;
+    const [token, setToken] = useState<string | null>(null);
+    
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const token = localStorage.getItem('authToken');
+            const storedUserData = localStorage.getItem('user');
+            
+            if (!token || !storedUserData) {
+                router.push('/auth/usuario');
+                return;
+            }
+        
+            const user = JSON.parse(storedUserData);
+            setDados(user);
+            setPreviewSrc(user.image || '');
+            setToken(token);
+        }
+    }, [router]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -54,6 +68,8 @@ export default function Page() {
     const handleRemoveImage = () => {
         setPreviewSrc(null);
     };
+
+    const email = dados.email;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -121,24 +137,6 @@ export default function Page() {
         }
         return new File([u8arr], filename, { type: mime });
     };
-
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                router.push('/auth/usuario');
-                return;
-            }
-
-            const storedUserData = localStorage.getItem('user');
-            if (storedUserData) {
-                const user = JSON.parse(storedUserData);
-                setDados(user);
-                setPreviewSrc(user.image || '');
-            }
-        }
-    }, [router]);
 
     const handleEditClick = () => setIsModalOpen(true);
     const handleCloseModal = () => setIsModalOpen(false);
@@ -279,9 +277,9 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black pl-64 pr-6 pt-20 overflow-auto" style={{ marginTop: '4rem' }}>
+            <div className="flex-1 bg-white text-black pl-64 pr-6 pt-20 overflow-auto" style={{ marginTop: '4rem', height: 'calc(100vh - 4rem)' }}>
                 <div className="flex justify-center items-center h-full">
-                    <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-gray">
+                    <div className="text-center bg-white p-8 rounded-xl shadow-lg border border-gray ">
                         <img
                             src="/images/usuario1.png"
                             alt="Usuário"

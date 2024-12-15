@@ -10,17 +10,15 @@ export default function Page() {
     const router = useRouter();
 
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            router.push('/auth/usuario');
-            return;
-        }
-
-        const storedUserData = localStorage.getItem('user');
-        if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
-        }
-
+            if (typeof window !== 'undefined') {
+                const token = localStorage.getItem('authToken');
+                const storedUserData = localStorage.getItem('user');
+                
+                if (!token || !storedUserData) {
+                    router.push('/auth/usuario');
+                    return;
+                }
+            }
     }, [router]);
 
     const handleLogout = () => {
@@ -158,7 +156,22 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black " style={{ marginTop: '4rem' }}>
+            <div className="flex-1 overflow-hidden" style={{ marginTop: '4rem' }}>
+                <section className="bg-light-gray text-black">
+                    <div className="mx-auto max-w-screen-xl px-4 py-32 lg:flex h-screen lg:items-center ">
+                        <div className="mx-auto max-w-3xl text-center h-64">
+                            <h1
+                                className="bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 bg-clip-text text-3xl font-extrabold text-transparent sm:text-5xl"
+                            >
+                                Bem-vindo ao Azure!
+
+                            </h1>
+                            <p className="mx-auto mt-4 max-w-xl sm:text-xl text-black">
+                                Gerencie usuários e organizadores de eventos.
+                            </p>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );

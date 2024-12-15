@@ -23,21 +23,58 @@ export default function Page() {
 
         if (storedUserData) {
             const userEmail = JSON.parse(storedUserData).email;
+
             const fetchEvents = async () => {
                 try {
                     const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
                     const data = await response.json();
-                    setEvents(data);
+    
+                    if (Array.isArray(data) && data.length > 0) {
+                        const eventsOrganizerNames = await Promise.all(
+                            data.map(async (eventItem) => {
+                                const organizerName = await fetchOrganizerName(eventItem.events.organizator);
+                                return {
+                                    ...eventItem,
+                                    organizer: organizerName || 'Desconhecido',
+                                };
+                            })
+                        );
+    
+                        setEvents(eventsOrganizerNames);
+                    } else {
+                        console.warn("Nenhum evento encontrado.");
+                    }
                 } catch (error) {
                     console.error("Erro ao buscar os eventos:", error);
                 }
             };
-
+            
             fetchEvents();
         }
-
     }, [router]);
+
     
+    const fetchOrganizerName = async (organizerEmail: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar nome do organizador');
+            }
+
+            const data = await response.json();
+            return data.users?.name || 'Desconhecido';
+        } catch (error) {
+            console.error('Erro ao buscar nome do organizador', error);
+            return 'Desconhecido';
+        }
+    };
+
     const handleCancelRegistration = async (registrationId: number) => {
         try {
             const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
@@ -205,7 +242,7 @@ export default function Page() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem' }}>
+            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <div className="p-6">
                     {events.length > 0 ? (
                     events.map((event: any, index: number) => (
@@ -214,27 +251,30 @@ export default function Page() {
                             className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
                         >
                             <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
-                                <div className="flex-1 pr-4 text-sm text-gray-600">
-                                    <h2 className="text-lg font-semibold mb-2">
-                                        <strong>{event.events.description}</strong>
-                                    </h2>
-                                    <p><strong>Localização:</strong> {event.events.location}</p>
-                                    <p><strong>Organizador:</strong> {event.events.organizator}</p>
-                                    <p>
-                                        <strong>Data de Início: </strong>
-                                        {new Date(event.events.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                        <strong> Horário: </strong>
-                                        {new Date(event.events.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                    </p>
-                                    <p>
-                                        <strong>Data de Término: </strong>
-                                        {new Date(event.events.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                        <strong> Horário: </strong>
-                                        {new Date(event.events.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                    </p>
-                                </div>
-
-                                <div className="mt-10">
+                            <div className="flex-1 pr-4 text-sm text-gray-600">
+                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                    <p><strong>Evento:</strong></p>
+                                </h2>
+                                <h2 className="text-xs sm:text-sm font-semibold mb-1">
+                                    <strong>{event.events.description}</strong>
+                                </h2>
+                                <p><strong>Localização:</strong> {event.events.location}</p>
+                                <p>
+                                    <strong>Data de Início: </strong>
+                                    {new Date(event.events.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                    <strong> Horário: </strong>
+                                    {new Date(event.events.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
+                                </p>
+                                <p>
+                                    <strong>Data de Término: </strong>
+                                    {new Date(event.events.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                    <strong> Horário: </strong>
+                                    {new Date(event.events.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
+                                </p>
+                                <br />
+                                <p><strong>Organizador do Evento:</strong> {event.organizer}</p>
+                            </div>
+                                <div className="mt-14">
                                     <button
                                         className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
                                         onClick={() => handleCancelRegistration(event.id)}

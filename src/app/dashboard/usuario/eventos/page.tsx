@@ -355,26 +355,17 @@ export default function Page() {
                                         <div className="relative bg-light-gray p-4">
                                             <p className="mt-1 text-xs text-black"><strong>Descrição:</strong> {event.description}</p>
                                             <p className="mt-1 text-xs text-black"><strong>Localização:</strong> {event.location}</p>
-                                            <p className="mt-1 text-xs text-black"><strong>Data de Início:</strong> {event.begin ? (
-                                            <>
-                                                {new Date(event.begin).toLocaleString('pt-BR', { 
-                                                year: 'numeric', 
-                                                month: 'numeric', 
-                                                day: 'numeric' 
-                                                })} <strong>Horário</strong> {new Date(event.begin).toLocaleTimeString('pt-BR')}
-                                            </>
-                                            ) : "Data não disponível"}</p>
-
-                                            <p className="mt-1 text-xs text-black"><strong>Data de Término:</strong> {event.end ? (
-                                            <>
-                                                {new Date(event.end).toLocaleString('pt-BR', { 
-                                                year: 'numeric', 
-                                                month: 'numeric', 
-                                                day: 'numeric' 
-                                                })} <strong>Horário</strong> {new Date(event.end).toLocaleTimeString('pt-BR')}
-                                            </>
-                                            ) : "Data não disponível"}</p>
-
+                                            
+                                            <p className="mt-1 text-xs text-black"><strong>Data de Início:</strong> 
+                                            {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} 
+                                                <strong> Horário: </strong>
+                                                {new Date(event.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
+                                            </p>
+                                            <p className="mt-1 text-xs text-black"><strong>Data de Término: </strong>
+                                                {new Date(event.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                                <strong> Horário: </strong>
+                                                {new Date(event.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
+                                            </p>
                                             <form className="mt-1 flex gap-2">
                                                 <button
                                                         className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
