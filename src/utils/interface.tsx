@@ -49,3 +49,12 @@ export interface IHorary {
     horarys: IHorary[];  // Lista de horários associados a esse evento
   }
   
+  export interface IUser {
+    email: string;
+    name: string;
+    password: string; // A senha parece estar encriptada
+    isadmin: boolean;
+    imagefield: string; // URL para a imagem de perfil
+    isactive: boolean;
+  }
+  
