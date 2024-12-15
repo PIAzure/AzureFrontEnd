@@ -115,7 +115,6 @@ export function FormCadastraEvento({ isOpen }: IProps) {
     useEffect(() => {
         const user = localStorage.getItem('user');
         if (user) {
-            console.log('Usuário encontrado no localStorage:', user);
             const userObj = JSON.parse(user);
             const email = userObj.email;
             setEvent((prevEvent) => ({

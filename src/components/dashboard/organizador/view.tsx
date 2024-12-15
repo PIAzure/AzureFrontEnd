@@ -139,16 +139,12 @@ export function View({ isOpen, evento }: IProps) {
                         </div>
                         : null
                 }
-                <span className="flex items-center mb-[20px]">
-                    <span className="h-px flex-1 bg-black"></span>
-                    <span className="shrink-0 px-6">Convites enviados</span>
-                    <span className="h-px flex-1 bg-black"></span>
-                </span>
+           
                 <div
                     onClick={() => { setInvatePopUp(true) }}
-                    className="mb-[30px] ml-auto cursor-pointer max-w-[100px] text-center rounded bg-indigo-600 px-4 py-2 text-xs font-medium text-white hover:bg-indigo-700"
+                    className="mb-[30px] ml-auto cursor-pointer max-w-[300px] text-center rounded bg-indigo-600 px-4 py-2 text-16px font-medium text-white hover:bg-indigo-700"
                 >
-                    Criar convite
+                    Enviar convite para participante
                 </div>
 
                 {/* {
