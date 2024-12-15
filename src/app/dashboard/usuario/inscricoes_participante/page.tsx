@@ -7,6 +7,8 @@ import Link from 'next/link';
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -87,9 +89,20 @@ export default function Page() {
             } else {
                 alert('Erro ao cancelar a inscrição.');
             }
+
+            closeConfirmModal();
         } catch (error) {
             console.error("Erro ao cancelar a inscrição:", error);
         }
+    };
+
+    const openConfirmModal = (eventId: number) => {
+        setSelectedEventId(eventId);
+        setIsConfirmModalOpen(true);
+    };
+
+    const closeConfirmModal = () => {
+        setIsConfirmModalOpen(false);
     };
 
     const baseUrl = "http://127.0.0.1:8000";
@@ -277,7 +290,8 @@ export default function Page() {
                                 <div className="mt-14">
                                     <button
                                         className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
-                                        onClick={() => handleCancelRegistration(event.id)}
+                                        onClick={() => openConfirmModal(event.id)}
+
                                     >
                                         <i className="fas fa-times mr-2"></i>
                                         Cancelar Participação
@@ -294,7 +308,34 @@ export default function Page() {
                     </div>
                     )}
                 </div>
-                </div>
+                {isConfirmModalOpen && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                            <p className="text-lg font-bold">Tem certeza que deseja cancelar a sua participação no evento?</p>
+                            <div className="flex justify-end mt-4 space-x-4">
+                                <button
+                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                    onClick={closeConfirmModal}
+                                >
+                                    Não
+                                </button>
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                    onClick={() => {
+                                        if (selectedEventId !== null) {
+                                            handleCancelRegistration(selectedEventId);
+                                        } else {
+                                            alert('Por favor, selecione um horário e um voluntário.');
+                                        }
+                                    }}
+                                >
+                                    Sim
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

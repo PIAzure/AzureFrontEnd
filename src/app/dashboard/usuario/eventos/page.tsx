@@ -16,6 +16,7 @@ export default function Page() {
     const [horarios, setHorarios] = useState([]);
     const [selectedHorary, setSelectedHorary] = useState<number | null>(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -78,14 +79,40 @@ export default function Page() {
             }
     
             const checkData = await checkResponse.json();
-    
+            
             const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
-    
             if (isAlreadyRegistered) {
                 console.log('Você já está inscrito nesse evento!');
                 alert('Você já está inscrito nesse evento!');
                 return;
             }
+
+            const checkEvents = await fetch(`http://127.0.0.1:8000/events/admin/all/`);
+            if (!checkEvents.ok) {
+                throw new Error('Erro ao verificar eventos do usuário.');
+            }
+            const dataEvents = await checkEvents.json();
+
+            const selectedEvent = dataEvents.find((event: any) => event.id === eventId);
+            const selectedEventStartDate = selectedEvent.begin;
+            const selectedEventEndDate = selectedEvent.end;
+ 
+            const isConflicting = checkData.some((participant: any) => {
+                const participantEvent = participant.events;
+                const participantStartDate = participantEvent.begin;
+                const participantEndDate = participantEvent.end;
+                
+                return (
+                   (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
+                );
+            });
+
+            if (isConflicting) {
+                console.log('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
+                alert('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
+                return;
+            }
+            
     
             const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
@@ -103,19 +130,20 @@ export default function Page() {
             }
     
             console.log("Parabéns, Inscrição realizada com sucesso!");
-            alert('Inscrição realizada com sucesso!');
-        } catch (err: any) {
-            console.error("Erro na inscrição:", err.message || err);
-            alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
-        }
+        alert('Inscrição realizada com sucesso!');
+    } catch (err: any) {
+        console.error("Erro na inscrição:", err.message || err);
+        alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
+    }
     };
     
     const fetchHorarios = async (eventId: number) => {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
-          if (!response.ok) {
-            throw new Error('Erro ao buscar horários do evento.');
-          }
+            setSelectedEventId(eventId); // Salva o eventId no estado
+            const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
+            if (!response.ok) {
+                throw new Error('Erro ao buscar horários do evento.');
+            }
     
           const data = await response.json();
           setHorarios(data[0]?.horarys || []);
@@ -146,13 +174,15 @@ export default function Page() {
         setIsConfirmModalOpen(false);
     };
 
-    const handleConfirmRegistration = () => {
+    const handleConfirmRegistration = async () => {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = userData?.email;
         const horaryId = selectedHorary;
+        const eventID = selectedEventId;
         console.log(userEmail);
-        console.log(horaryId);
-
+        console.log(eventID);
+        console.log(horaryId);  
+    
         if (!userEmail) {
             alert('Não foi possível obter o email do usuário.');
             closeConfirmModal();
@@ -164,12 +194,112 @@ export default function Page() {
             closeConfirmModal();
             return;
         }
+    
+        if (!eventID) {
+            alert('Não foi possível obter o ID do evento.');
+            closeConfirmModal();
+            return;
+        }
+    
+        const eventsResponse = await fetch('http://127.0.0.1:8000/events/admin/all/');
+        if (!eventsResponse.ok) {
+            throw new Error('Erro ao buscar eventos.');
+        }
+    
+        const events = await eventsResponse.json();
+        console.log('Eventos:', events);
+    
+        const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+        if (!response.ok) {
+            throw new Error('Erro ao buscar escala do evento.');
+        }
+    
+        const eventData = await response.json();
+    
+        if (!Array.isArray(eventData[0]?.horarys)) {
+            throw new Error('Horários não encontrados ou formato inválido.');
+        }
+    
+        const horary = eventData[0].horarys.find((horary: { id: number; }) => horary.id === horaryId);
+        if (!horary) {
+            throw new Error('Horário não encontrado.');
+        }
+    
+        const selectedDatetime = horary.datetime;
+        console.log("Datetime do Horário Selecionado:", selectedDatetime);
+        
 
-        const scaleUrl = `http://127.0.0.1:8000/scale/3/`;
+        let isAlreadyRegistered = false;
+
+        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+        if (!scaleResponse.ok) {
+            console.error('Erro ao buscar a escala do evento.');
+            closeConfirmModal();
+            return;
+        }
+
+        const scaleData = await scaleResponse.json();
+        console.log("Dados da Escala:", scaleData);
+
+        for (const horary of scaleData[0]?.horarys || []) {
+            if (horary.id === horaryId) {
+                console.log("Horário encontrado:", horary);
+
+                const userInVoluntarys = horary.voluntarys.some(
+                    (voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail
+                );
+
+                if (userInVoluntarys) {
+                    console.log('Você já está inscrito nesse horário!');
+                    alert('Você já está inscrito nesse horário!');
+                    isAlreadyRegistered = true;
+                    break;
+                }
+            }
+        }
+
+        if (isAlreadyRegistered) {
+            closeConfirmModal();
+            return;
+        }
 
 
+        let hasConflict = false;
+        for (const event of events) {
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            if (!scaleResponse.ok) {
+                continue;
+            }
+    
+            const scaleData = await scaleResponse.json();
+            
+            for (const horaryItem of scaleData[0]?.horarys) {
+                const userInVoluntarys = horaryItem.voluntarys.some((voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail);
+    
+                if (userInVoluntarys) {
+                    const eventStart = horaryItem.datetime;
+                    const selectedStart = selectedDatetime;
+                    console.log("Horario verificar:", eventStart);
+                    console.log("Horário selecionado para inscrição:", selectedStart);
+                    if (selectedStart == eventStart) {
+                        alert('Você já está inscrito em outro horário que conflita com o horário selecionado. Por favor, escolha um horário diferente.');
+                        hasConflict = true;
+                        break;
+                    }
+                }
+            }
+    
+            if (hasConflict) {
+                break;
+            }
+        }
+    
+        if (hasConflict) {
+            closeConfirmModal();
+            return;
+        }
+    
         const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
-
         fetch(url, {
             method: 'POST',
             headers: {
@@ -179,7 +309,6 @@ export default function Page() {
         .then((response) => {
             if (!response.ok) {
                 throw new Error('Erro ao realizar o cadastro.');
-                closeConfirmModal();
             }
             alert('Cadastro realizado com sucesso!');
             closeConfirmModal();
@@ -191,6 +320,7 @@ export default function Page() {
             closeConfirmModal();
         });
     };
+    
     
     const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
