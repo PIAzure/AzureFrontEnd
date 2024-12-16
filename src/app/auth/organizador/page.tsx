@@ -45,8 +45,8 @@ export default function Page() {
 
             const { Token, user } = await response.json();
 
-            localStorage.setItem('authToken', Token.access);
-            localStorage.setItem('user', JSON.stringify(user));
+            localStorage.setItem('authTokenOrganizator', Token.access);
+            localStorage.setItem('organizator', JSON.stringify(user));
 
             router.push('/dashboard/organizador');
         } catch (error) {
@@ -57,7 +57,7 @@ export default function Page() {
     };
 
     useEffect(()=>{
-        const user= localStorage.getItem('authToken')
+        const user= localStorage.getItem('authTokenOrganizator')
         if (user) {
             route.push('/dashboard/organizador')
         }
@@ -191,7 +191,7 @@ export default function Page() {
                                 Não tem conta?{' '}
                                 <a
                                     className="underline hover:text-cian"
-                                    href="/auth/usuario/criar-conta"
+                                    href="/auth/organizador/criar-conta"
                                 >
                                     Cadastre-se
                                 </a>

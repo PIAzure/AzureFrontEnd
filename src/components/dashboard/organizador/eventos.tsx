@@ -35,7 +35,7 @@ export function Eventos() {
 
     useEffect(() => {
         console.log('useEffect executado');
-        const user = localStorage.getItem('user');
+        const user = localStorage.getItem('organizator');
         if (user) {
             const userObj = JSON.parse(user);
             const email = userObj.email;
