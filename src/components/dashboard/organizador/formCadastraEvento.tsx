@@ -113,7 +113,7 @@ export function FormCadastraEvento({ isOpen }: IProps) {
     }
 
     useEffect(() => {
-        const user = localStorage.getItem('user');
+        const user = localStorage.getItem('organizator');
         if (user) {
             const userObj = JSON.parse(user);
             const email = userObj.email;
