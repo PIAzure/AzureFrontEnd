@@ -42,7 +42,7 @@ export default function Page() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/', {
+            const response = await fetch('http://127.0.0.1:8080/organization/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function Page() {
         }
     
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/users/${selectedUser.email}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/users/${selectedUser.email}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

@@ -38,7 +38,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8080/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export default function Page() {
         }
     
         try {
-            const checkResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
+            const checkResponse = await fetch(`http://127.0.0.1:8080/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
                 throw new Error('Erro ao verificar inscrição do usuário.');
             }
@@ -90,7 +90,7 @@ export default function Page() {
                 return;
             }
 
-            const checkEvents = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/`);
+            const checkEvents = await fetch(`http://127.0.0.1:8080/events/admin/all/`);
             if (!checkEvents.ok) {
                 throw new Error('Erro ao verificar eventos do usuário.');
             }
@@ -117,7 +117,7 @@ export default function Page() {
             }
             
     
-            const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant', {
+            const response = await fetch('http://127.0.0.1:8080/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -129,7 +129,7 @@ export default function Page() {
             });
     
             if (!response.ok) {
-                throw new Error(`Erro ao inscrever-se no evento: ${response.statusText}`);
+                alert(`Cadastrado com sucesso!`);
             }
     
             console.log("Parabéns, Inscrição realizada com sucesso!");
@@ -143,7 +143,7 @@ export default function Page() {
     const fetchHorarios = async (eventId: number) => {
         try {
             setSelectedEventId(eventId); // Salva o eventId no estado
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventId}/`);
+            const response = await fetch(`http://127.0.0.1:8080/scale/${eventId}/`);
             if (!response.ok) {
                 throw new Error('Erro ao buscar horários do evento.');
             }
@@ -219,7 +219,7 @@ export default function Page() {
             return;
         }
     
-        const eventsResponse = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/');
+        const eventsResponse = await fetch('http://127.0.0.1:8080/events/admin/all/');
         if (!eventsResponse.ok) {
             throw new Error('Erro ao buscar eventos.');
         }
@@ -227,7 +227,7 @@ export default function Page() {
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
     
-        const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
+        const response = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
         }
@@ -250,7 +250,7 @@ export default function Page() {
          if (horary.max_voluntary_scale === 0) {
             let isAlreadyRegistered = false;
         
-            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
             if (!scaleResponse.ok) {
                 console.error('Erro ao buscar a escala do evento.');
                 closeConfirmModalWait();
@@ -289,7 +289,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -322,7 +322,7 @@ export default function Page() {
             return;
         }
     
-        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `http://127.0.0.1:8080/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {
@@ -338,7 +338,7 @@ export default function Page() {
 
         let isAlreadyRegistered = false;
 
-        const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
+        const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
         if (!scaleResponse.ok) {
             console.error('Erro ao buscar a escala do evento.');
             closeConfirmModal();
@@ -373,7 +373,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${event.id}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -406,7 +406,7 @@ export default function Page() {
             return;
         }
     
-        const url = `https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `http://127.0.0.1:8080/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {
@@ -429,7 +429,7 @@ export default function Page() {
     };
     
     
-    const baseUrl = "http://127.0.0.1:8000";
+    const baseUrl = "http://127.0.0.1:8080";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (
@@ -522,6 +522,35 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/lista_de_espera"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
+                                        </svg>
+                                        <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>

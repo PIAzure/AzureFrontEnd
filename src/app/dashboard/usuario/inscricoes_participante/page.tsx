@@ -28,7 +28,7 @@ export default function Page() {
 
             const fetchEvents = async () => {
                 try {
-                    const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
+                    const response = await fetch(`http://127.0.0.1:8080/participant/event/${userEmail}/`);
                     const data = await response.json();
     
                     if (Array.isArray(data) && data.length > 0) {
@@ -59,7 +59,7 @@ export default function Page() {
     
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
+            const response = await fetch(`http://127.0.0.1:8080/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export default function Page() {
     
             const eventId = event.eventId; 
     
-            const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
+            const response = await fetch(`http://127.0.0.1:8080/participant/${registrationId}/delete`, {
                 method: 'DELETE',
             });
     
@@ -110,7 +110,7 @@ export default function Page() {
     
     const handleWaitingList = async (eventId: number) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/participant/wait/${eventId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ export default function Page() {
                 }
             } else {
                 console.error('Erro na requisição:', response.statusText);
-                alert('Sem Usuários Disponíveis na Lista de Espera.');
+                // alert('Sem Usuários Disponíveis na Lista de Espera.');
             }
         } catch (error) {
             console.error('Erro ao fazer a requisição para a lista de espera:', error);
@@ -146,7 +146,7 @@ export default function Page() {
         setIsConfirmModalOpen(false);
     };
 
-    const baseUrl = "http://127.0.0.1:8000";
+    const baseUrl = "http://127.0.0.1:8080";
 
     return (
         <div className="flex h-screen border border-white">
@@ -262,6 +262,24 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>
