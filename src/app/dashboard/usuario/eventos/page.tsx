@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-
 export default function Page() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -18,8 +17,10 @@ export default function Page() {
     const [selectedHorary, setSelectedHorary] = useState<number | null>(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-    const router = useRouter();
 
+    const [isModalOpenWait, setIsModalOpenWait] = useState(false);
+    const [isConfirmModalOpenWait, setIsConfirmModalOpenWait] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -27,14 +28,12 @@ export default function Page() {
             router.push('/auth/usuario');
             return;
         }
-       
+        
         fetchEventos();
     }, [router]);
 
-
     const currentEvents = events
         .slice((currentPage - 1) * eventsPerPage, currentPage * eventsPerPage);
-
 
         const fetchEventos = async () => {
             try {
@@ -45,13 +44,13 @@ export default function Page() {
                         'Content-Type': 'application/json',
                     },
                 });
-       
+        
                 if (!response.ok) {
                     throw new Error('Erro ao buscar eventos.');
                 }
-       
+        
                 const data = await response.json();
-       
+        
                 setEvents(data);
                 setTotalPages(Math.ceil(data.length / eventsPerPage));
                 setError(null);
@@ -67,7 +66,7 @@ export default function Page() {
             setCurrentPage(newPage);
         }
     };
-
+    
     const handleInscreverParticipante = async (eventId: number) => {
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         const userEmail = user?.email;
@@ -75,55 +74,49 @@ export default function Page() {
             alert('Não foi possível obter o email do usuário.');
             return;
         }
-   
+    
         try {
             const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
                 throw new Error('Erro ao verificar inscrição do usuário.');
             }
-   
+    
             const checkData = await checkResponse.json();
-           
+            
             const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
             if (isAlreadyRegistered) {
                 console.log('Você já está inscrito nesse evento!');
                 alert('Você já está inscrito nesse evento!');
                 return;
             }
-   
+
             const checkEvents = await fetch(`http://127.0.0.1:8000/events/admin/all/`);
             if (!checkEvents.ok) {
                 throw new Error('Erro ao verificar eventos do usuário.');
             }
             const dataEvents = await checkEvents.json();
-   
+
             const selectedEvent = dataEvents.find((event: any) => event.id === eventId);
             const selectedEventStartDate = selectedEvent.begin;
             const selectedEventEndDate = selectedEvent.end;
-            const maxParticipants = selectedEvent.max_participants; // Verifica a quantidade de participantes máximos
-   
-            // Se o evento estiver cheio (max_participants === 0), inscreve automaticamente na lista de espera
-            if (maxParticipants === 0) {
-                console.log('O evento está cheio, você foi adicionado à lista de espera.');
-                alert('Parabéns, você entrou na lista de espera!');
-            }
-   
+ 
             const isConflicting = checkData.some((participant: any) => {
                 const participantEvent = participant.events;
                 const participantStartDate = participantEvent.begin;
                 const participantEndDate = participantEvent.end;
-   
+                
                 return (
-                    (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
+                   (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
                 );
             });
-   
+
             if (isConflicting) {
                 console.log('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 alert('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 return;
             }
-   
+            
+    
             const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
                 headers: {
@@ -134,19 +127,19 @@ export default function Page() {
                     event: eventId
                 }),
             });
-   
+    
             if (!response.ok) {
                 throw new Error(`Erro ao inscrever-se no evento: ${response.statusText}`);
             }
-   
+    
             console.log("Parabéns, Inscrição realizada com sucesso!");
-            alert('Inscrição realizada com sucesso!');
-        } catch (err: any) {
-            console.error("Erro na inscrição:", err.message || err);
-        }
+        alert('Inscrição realizada com sucesso!');
+    } catch (err: any) {
+        console.error("Erro na inscrição:", err.message || err);
+        alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
+    }
     };
-   
-   
+    
     const fetchHorarios = async (eventId: number) => {
         try {
             setSelectedEventId(eventId); // Salva o eventId no estado
@@ -154,7 +147,7 @@ export default function Page() {
             if (!response.ok) {
                 throw new Error('Erro ao buscar horários do evento.');
             }
-   
+    
           const data = await response.json();
           setHorarios(data[0]?.horarys || []);
         } catch (err: any) {
@@ -163,30 +156,41 @@ export default function Page() {
         }
       };
 
-
     const openModal = (event: any) => {
         setSelectedEvent(event);
         fetchHorarios(event.id);
         setIsModalOpen(true);
     };
-   
+    
     const closeModal = () => {
         setSelectedEvent(null);
         setHorarios([]);
         setIsModalOpen(false);
     };
 
+    const closeModalWait = () => {
+        setSelectedEvent(null);
+        setHorarios([]);
+        setIsModalOpenWait(false);
+    };
 
     const openConfirmModal = (horaryId: number) => {
         setSelectedHorary(horaryId);
         setIsConfirmModalOpen(true);
     };
 
+    const openConfirmModalWait = (horaryId: number) => {
+        setSelectedHorary(horaryId);
+        setIsConfirmModalOpenWait(true);
+    };
+
+    const closeConfirmModalWait = () => {
+        setIsConfirmModalOpenWait(false);
+    };
 
     const closeConfirmModal = () => {
         setIsConfirmModalOpen(false);
     };
-
 
     const handleConfirmRegistration = async () => {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
@@ -196,95 +200,91 @@ export default function Page() {
         console.log(userEmail);
         console.log(eventID);
         console.log(horaryId);  
-   
+    
         if (!userEmail) {
             alert('Não foi possível obter o email do usuário.');
             closeConfirmModal();
             return;
         }
-   
+    
         if (!horaryId) {
             alert('Não foi possível obter o ID do horário.');
             closeConfirmModal();
             return;
         }
-   
+    
         if (!eventID) {
             alert('Não foi possível obter o ID do evento.');
             closeConfirmModal();
             return;
         }
-   
+    
         const eventsResponse = await fetch('http://127.0.0.1:8000/events/admin/all/');
         if (!eventsResponse.ok) {
             throw new Error('Erro ao buscar eventos.');
         }
-   
+    
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
-   
+    
         const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
         }
-   
+    
         const eventData = await response.json();
-   
+    
         if (!Array.isArray(eventData[0]?.horarys)) {
             throw new Error('Horários não encontrados ou formato inválido.');
         }
-   
+    
         const horary = eventData[0].horarys.find((horary: { id: number; }) => horary.id === horaryId);
         if (!horary) {
             throw new Error('Horário não encontrado.');
         }
-   
+    
         const selectedDatetime = horary.datetime;
         console.log("Datetime do Horário Selecionado:", selectedDatetime);
-       
-
-
-        let isAlreadyRegistered = false;
-
-
-        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
-        if (!scaleResponse.ok) {
-            console.error('Erro ao buscar a escala do evento.');
-            closeConfirmModal();
-            return;
-        }
-
-
-        const scaleData = await scaleResponse.json();
-        console.log("Dados da Escala:", scaleData);
-
-
-        for (const horary of scaleData[0]?.horarys || []) {
-            if (horary.id === horaryId) {
-                console.log("Horário encontrado:", horary);
-
-
-                const userInVoluntarys = horary.voluntarys.some(
-                    (voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail
-                );
-
-
-                if (userInVoluntarys) {
-                    console.log('Você já está inscrito nesse horário!');
-                    alert('Você já está inscrito nesse horário!');
-                    isAlreadyRegistered = true;
-                    break;
+        
+         // Verifique se há vagas restantes (max_voluntary_scale)
+         if (horary.max_voluntary_scale === 0) {
+            let isAlreadyRegistered = false;
+        
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+            if (!scaleResponse.ok) {
+                console.error('Erro ao buscar a escala do evento.');
+                closeConfirmModalWait();
+                closeModal();
+                return;
+            }
+        
+            const scaleData = await scaleResponse.json();
+            console.log("Dados da Escala:", scaleData);
+        
+            for (const horary of scaleData[0]?.horarys || []) {
+                if (horary.id === horaryId) {
+                    console.log("Horário encontrado:", horary);
+        
+                    const userInVoluntarys = horary.voluntarys.some(
+                        (voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail
+                    );
+        
+                    if (userInVoluntarys) {
+                        console.log('Você já está inscrito nesse horário!');
+                        alert('Você já está inscrito nesse horário!');
+                        isAlreadyRegistered = true;
+                        
+                        break;
+                    }
                 }
             }
-        }
-
-
-        if (isAlreadyRegistered) {
-            closeConfirmModal();
-            return;
-        }
-
-
+        
+            if (isAlreadyRegistered) {
+                closeConfirmModalWait();
+                return;
+            }
+        
+            alert('Parabéns, você está na fila de espera!');
 
 
         let hasConflict = false;
@@ -293,12 +293,12 @@ export default function Page() {
             if (!scaleResponse.ok) {
                 continue;
             }
-   
+    
             const scaleData = await scaleResponse.json();
-           
+            
             for (const horaryItem of scaleData[0]?.horarys) {
                 const userInVoluntarys = horaryItem.voluntarys.some((voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail);
-   
+    
                 if (userInVoluntarys) {
                     const eventStart = horaryItem.datetime;
                     const selectedStart = selectedDatetime;
@@ -311,17 +311,101 @@ export default function Page() {
                     }
                 }
             }
-   
+    
             if (hasConflict) {
                 break;
             }
         }
-   
+    
+        if (hasConflict) {
+            closeConfirmModalWait();
+            return;
+        }
+    
+        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        closeConfirmModalWait();
+        closeModal();
+
+       
+        return;
+    }
+
+        let isAlreadyRegistered = false;
+
+        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+        if (!scaleResponse.ok) {
+            console.error('Erro ao buscar a escala do evento.');
+            closeConfirmModal();
+            return;
+        }
+
+        const scaleData = await scaleResponse.json();
+        console.log("Dados da Escala:", scaleData);
+
+        for (const horary of scaleData[0]?.horarys || []) {
+            if (horary.id === horaryId) {
+                console.log("Horário encontrado:", horary);
+
+                const userInVoluntarys = horary.voluntarys.some(
+                    (voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail
+                );
+
+                if (userInVoluntarys) {
+                    console.log('Você já está inscrito nesse horário!');
+                    alert('Você já está inscrito nesse horário!');
+                    isAlreadyRegistered = true;
+                    break;
+                }
+            }
+        }
+
+        if (isAlreadyRegistered) {
+            closeConfirmModal();
+            return;
+        }
+
+
+        let hasConflict = false;
+        for (const event of events) {
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            if (!scaleResponse.ok) {
+                continue;
+            }
+    
+            const scaleData = await scaleResponse.json();
+            
+            for (const horaryItem of scaleData[0]?.horarys) {
+                const userInVoluntarys = horaryItem.voluntarys.some((voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail);
+    
+                if (userInVoluntarys) {
+                    const eventStart = horaryItem.datetime;
+                    const selectedStart = selectedDatetime;
+                    console.log("Horario verificar:", eventStart);
+                    console.log("Horário selecionado para inscrição:", selectedStart);
+                    if (selectedStart == eventStart) {
+                        alert('Você já está inscrito em outro horário que conflita com o horário selecionado. Por favor, escolha um horário diferente.');
+                        hasConflict = true;
+                        break;
+                    }
+                }
+            }
+    
+            if (hasConflict) {
+                break;
+            }
+        }
+    
         if (hasConflict) {
             closeConfirmModal();
             return;
         }
-   
+    
         const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
@@ -343,11 +427,10 @@ export default function Page() {
             closeConfirmModal();
         });
     };
-   
-   
+    
+    
     const baseUrl = "http://127.0.0.1:8000";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
-
 
     return (
         <div className="flex h-screen border border-white justify-">
@@ -380,7 +463,6 @@ export default function Page() {
                     </div>
                 </section>
             </div>
-
 
             <div className="w-64 flex flex-col justify-between border border-white bg-cian">
                 <div className="flex flex-col items-left p-4 bg-cian border border-cian">
@@ -427,7 +509,6 @@ export default function Page() {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 6.75 6.75h2.018a5.25 5.25 0 0 0 3.712-1.538l1.732-1.732a5.25 5.25 0 0 0 1.538-3.712l.003-2.024a.668.668 0 0 1 .198-.471 1.575 1.575 0 1 0-2.228-2.228 3.818 3.818 0 0 0-1.12 2.687M6.9 7.575V12m6.27 4.318A4.49 4.49 0 0 1 16.35 15m.002 0h-.002" />
                                         </svg>
 
-
                                         <span className="text-sm">Inscrições como voluntariado</span>
                                     </Link>
                                 </li>
@@ -440,20 +521,7 @@ export default function Page() {
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                                         </svg>
 
-
                                         <span className="text-sm">Inscrições como participante</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href="/dashboard/usuario/lista_de_espera"
-                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
-                                        </svg>
-
-                                        <span className="text-sm">Lista de Espera</span>
                                     </Link>
                                 </li>
                                 <li>
@@ -514,20 +582,19 @@ export default function Page() {
                                         href="#"
                                         className="group relative block overflow-hidden border border-gray-200 rounded-lg border border-gray bg-cian"
                                         style={{ maxWidth: '300px',height: '300px'}}
-                                    >  
+                                    >   
                                         <img
                                             src={event.banner ? `${baseUrl}${event.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347"}
                                             alt="Banner do Evento"
                                             className="h-32 w-full object-cover transition duration-500 group-hover:scale-105"
                                         />
 
-
                                         <div className="relative bg-light-gray p-4">
                                             <p className="mt-1 text-xs text-black"><strong>Descrição:</strong> {event.description}</p>
                                             <p className="mt-1 text-xs text-black"><strong>Localização:</strong> {event.location}</p>
-                                           
-                                            <p className="mt-1 text-xs text-black"><strong>Data de Início:</strong>
-                                            {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                            
+                                            <p className="mt-1 text-xs text-black"><strong>Data de Início:</strong> 
+                                            {new Date(event.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} 
                                                 <strong> Horário: </strong>
                                                 {new Date(event.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
                                             </p>
@@ -537,57 +604,28 @@ export default function Page() {
                                                 {new Date(event.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
                                             </p>
                                             <form className="mt-1 flex gap-2">
-                                            {event.max_particpant === 0 ? (
                                                 <button
-                                                    className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleInscreverParticipante(event.id);
-                                                    }}
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        strokeWidth="1.5"
-                                                        stroke="currentColor"
-                                                        className="w-11 h-11 mr-2"
+                                                        className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleInscreverParticipante(event.id);
+                                                        }}
                                                     >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V9.75M8.25 21h8.25"
-                                                        />
-                                                    </svg>
-                                                    Evento Lotado, Entre na Lista de Espera!
+                                                        <svg
+                                                            xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none"
+                                                            viewBox="0 0 24 24"
+                                                            strokeWidth="1.5"
+                                                            stroke="currentColor"
+                                                            className="w-11 h-11 mr-2"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V9.75M8.25 21h8.25" />
+                                                        </svg>
+                                                        Inscrever-se como Participante
                                                 </button>
-                                            ) : (
-                                                <button
-                                                    className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        handleInscreverParticipante(event.id);
-                                                    }}
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        strokeWidth="1.5"
-                                                        stroke="currentColor"
-                                                        className="w-11 h-11 mr-2"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V9.75M8.25 21h8.25"
-                                                        />
-                                                    </svg>
-                                                    Inscrever-se como Participante
-                                                </button>
-                                            )}
-
-
                                                 <button
                                                     type="button"
                                                     className="w-full flex items-center justify-center rounded bg-gray-900 px-2 py-2 text-xs font-medium transition hover:scale-105 border border-black text-ice bg-cian"
@@ -645,7 +683,8 @@ export default function Page() {
                         </div>
                     </>
                 )}
-            </div>  
+            </div>
+
             {isModalOpen && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
         <div className="bg-white rounded-lg shadow-lg w-full max-w-4xl p-8 h-[600px]">
@@ -653,7 +692,6 @@ export default function Page() {
                 <h2 className="text-2xl text-green-500 font-bold">Agendamento</h2>
                 <button className="text-red-500 font-bold hover:text-gray-700" onClick={closeModal}>✕</button>
             </div>
-
 
             <div className="mt-4 space-y-4 max-h-[400px] overflow-y-auto">
                 {horarios.length > 0 ? (
@@ -681,7 +719,13 @@ export default function Page() {
                                 </div>
                                 <button
                                     className="bg-blue text-white py-2 px-4 rounded hover:bg-blue-600"
-                                    onClick={() => openConfirmModal(horario.id)}
+                                    onClick={() => {
+                                        if (horario.max_voluntary_scale === 0) {
+                                            openConfirmModalWait(horario.id);
+                                        } else {
+                                            openConfirmModal(horario.id);
+                                        }
+                                    }}
                                 >
                                     Selecionar
                                 </button>
@@ -692,7 +736,6 @@ export default function Page() {
                     <p className="text-gray-600"><strong>Nenhum horário disponível para este evento.</strong></p>
                 )}
 
-
                 {isConfirmModalOpen && (
                     <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
                         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
@@ -701,6 +744,28 @@ export default function Page() {
                                 <button
                                     className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
                                     onClick={closeConfirmModal}
+                                >
+                                    Não
+                                </button>
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                    onClick={handleConfirmRegistration}
+                                >
+                                    Sim
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isConfirmModalOpenWait && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                            <p className="text-lg font-bold">O Evento está lotado. Deseja participar da Fila de Espera?</p>
+                            <div className="flex justify-end mt-4 space-x-4">
+                                <button
+                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                    onClick={closeConfirmModalWait}
                                 >
                                     Não
                                 </button>
