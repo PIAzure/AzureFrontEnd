@@ -205,8 +205,8 @@ export default function Page() {
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
-                        {/* {
-                            data.lenght > 0 ?
+                        {
+                            data.length > 0 ?
                                 <div>
                                     {
                                         data.map((notify: any) => {
@@ -216,7 +216,7 @@ export default function Page() {
                                         })
                                     }
                                 </div> : null
-                        } */}
+                        }
                     </div>
                 </section>
             </div>
