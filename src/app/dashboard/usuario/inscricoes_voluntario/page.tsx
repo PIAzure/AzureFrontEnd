@@ -91,40 +91,83 @@ export default function Page() {
         }
     };
 
+    const handleWaitingList = async (eventId: number) => {
+        try {
+            const response = await fetch(`${baseUrl}/participant/wait/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta da API:', data);
+    
+                if (data.message && data.message.includes("Nenhum usuário na lista de espera")) {
+                    alert('Nenhum usuário disponível para preencher a vaga.');
+                } else {
+                    alert('Usuário da Lista de Espera inscrito no evento com sucesso!');
+                }
+            } else {
+                console.error('Erro na requisição:', response.statusText);
+                alert('Erro ao tentar inscrever o usuário da lista de espera.');
+            }
+        } catch (error) {
+            console.error('Erro ao fazer a requisição para a lista de espera:', error);
+            alert('Ocorreu um erro ao tentar processar a inscrição.');
+        }
+    };
+
+    
     const cancelRegistration = async (horaryId: number, voluntaryId: number) => {
-        console.log("ID do Horário: ",horaryId);
-        console.log("ID do Voluntário: ", voluntaryId);
-            try {
-                const deleteUrl = `http://127.0.0.1:8000/scale/${horaryId}/delete/${voluntaryId}/`;
-        
-                const deleteResponse = await fetch(deleteUrl, {
-                    method: 'DELETE',
+        console.log("ID do Horário:", horaryId);
+        console.log("ID do Voluntário:", voluntaryId);
+    
+        try {
+            const deleteUrl = `${baseUrl}/scale/${horaryId}/delete/${voluntaryId}/`;
+            
+            const deleteResponse = await fetch(deleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (deleteResponse.ok) {
+                alert('Inscrição cancelada com sucesso!');
+    
+                const eventWithHorary = events.find(event =>
+                    event.scaleData.some((scale: { horarys: { id: number }[] }) =>
+                        scale.horarys.some((hour: { id: number }) => hour.id === horaryId)
+                    )
+                );
+                const waitListUrl = `${baseUrl}/scale/wait/${horaryId}/`;
+                const waitListResponse = await fetch(waitListUrl, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-                
-                if (deleteResponse.ok) {
-                    alert('Inscrição cancelada com sucesso!');
-
-                setEvents((prevEvents) =>
+    
+                setEvents(prevEvents =>
                     prevEvents
-                        .map((event) => ({
+                        .map(event => ({
                             ...event,
-                            scaleData: event.scaleData.map((scale: any) => ({
+                            scaleData: event.scaleData.map((scale: { horarys: any[] }) => ({
                                 ...scale,
-                                horarys: scale.horarys.filter((hour: any) => hour.id !== horaryId),
+                                horarys: scale.horarys.filter((hour: { id: number }) => hour.id !== horaryId),
                             })),
                         }))
-                        .filter((event) => 
-                            event.scaleData.some((scale: any) => scale.horarys.some((hour: any) => hour.voluntarys.length > 0))
+                        .filter(event =>
+                            event.scaleData.some((scale: { horarys: string | any[] }) => scale.horarys.length > 0)
                         )
                 );
-
-                setHorarios((prevHorarios) =>
-                    prevHorarios.filter((horario) => horario.id !== horaryId)
+    
+                setHorarios(prevHorarios =>
+                    prevHorarios.filter(horario => horario.id !== horaryId)
                 );
-
+    
                 closeConfirmModal();
                 closeModal();
             } else {
@@ -134,6 +177,10 @@ export default function Page() {
             console.error('Erro ao cancelar inscrição:', error instanceof Error ? error.message : error);
         }
     };
+    
+
+    
+
     const openModal = (horarios: any[]) => {
         setHorarios(horarios);
         setIsModalOpen(true);
@@ -464,4 +511,8 @@ export default function Page() {
                 </div>
         </div>
     );
+}
+
+function handleWaitingList(eventId: any) {
+    throw new Error('Function not implemented.');
 }
