@@ -205,11 +205,16 @@ export default function Page() {
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
                         {
-                            data.map((notify: any) => {
-                                <div key={notify.id} className='shadow-2xl px-[20px] py-[20px]'>
-                                    <h2 className='text-18px font-semibold mb-[20px] italic'>{notify.msg}</h2>
-                                </div>
-                            })
+                            data.lenght > 0 ?
+                                <div>
+                                    {
+                                        data.map((notify: any) => {
+                                            <div key={notify.id} className='shadow-2xl px-[20px] py-[20px]'>
+                                                <h2 className='text-18px font-semibold mb-[20px] italic'>{notify.msg}</h2>
+                                            </div>
+                                        })
+                                    }
+                                </div> : null
                         }
                     </div>
                 </section>
