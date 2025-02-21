@@ -38,6 +38,7 @@ export default function Page() {
                                 return {
                                     ...eventItem,
                                     organizer: organizerName || 'Desconhecido',
+                                    eventId: eventItem.events.id,
                                 };
                             })
                         );
@@ -77,8 +78,16 @@ export default function Page() {
         }
     };
 
-    const handleCancelRegistration = async (registrationId: number) => {
+    const handleCancelRegistration = async (registrationId: number, selectedEventId: number) => {
         try {
+            const event = events.find(event => event.id === registrationId);
+            if (!event) {
+                alert('Evento não encontrado!');
+                return;
+            }
+    
+            const eventId = event.eventId; 
+    
             const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
                 method: 'DELETE',
             });
@@ -86,16 +95,48 @@ export default function Page() {
             if (response.ok) {
                 alert('Inscrição cancelada com sucesso!');
                 setEvents(events.filter(event => event.id !== registrationId));
+    
+                await handleWaitingList(eventId);
             } else {
                 alert('Erro ao cancelar a inscrição.');
             }
-
+    
             closeConfirmModal();
         } catch (error) {
             console.error("Erro ao cancelar a inscrição:", error);
         }
     };
-
+    
+    
+    const handleWaitingList = async (eventId: number) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta da API:', data);
+                
+                if (Array.isArray(data) && data.length === 0) {
+                    alert('Não há usuários na lista de espera para este evento.');
+                } else {
+                    alert('Usuário da Lista de Espera inscrito no evento com sucesso!');
+                }
+            } else {
+                console.error('Erro na requisição:', response.statusText);
+                alert('Sem Usuários Disponíveis na Lista de Espera.');
+            }
+        } catch (error) {
+            console.error('Erro ao fazer a requisição para a lista de espera:', error);
+            alert('Ocorreu um erro ao tentar processar a inscrição.');
+        }
+    };
+    
+    
     const openConfirmModal = (eventId: number) => {
         setSelectedEventId(eventId);
         setIsConfirmModalOpen(true);
@@ -213,6 +254,18 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
+                                        href="/dashboard/usuario/lista_de_espera"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
+                                        </svg>
+
+                                        <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/dashboard/usuario/convites"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
                                     >
@@ -323,7 +376,7 @@ export default function Page() {
                                     className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
                                     onClick={() => {
                                         if (selectedEventId !== null) {
-                                            handleCancelRegistration(selectedEventId);
+                                            handleCancelRegistration(selectedEventId, selectedEventId);
                                         } else {
                                             alert('Por favor, selecione um horário e um voluntário.');
                                         }
