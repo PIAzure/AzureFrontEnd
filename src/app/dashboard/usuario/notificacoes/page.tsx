@@ -209,7 +209,7 @@ export default function Page() {
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
                         {
-                            data ?
+                            data!=null ?
                                 <div>
                                     {
                                         data.map((notify: any) => {
