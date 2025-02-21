@@ -44,6 +44,9 @@ export default function Page() {
                 .catch((err) => console.error('Erro no fetch:', err));
         }
     }, [popUpDelete, updateCadastro]);
+    useEffect(()=>{
+        console.log(data,'data change')
+    },data)
 
     return (
         <div className="flex h-screen border border-white">
@@ -206,7 +209,7 @@ export default function Page() {
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
                         {
-                            data.length > 0 ?
+                            data ?
                                 <div>
                                     {
                                         data.map((notify: any) => {
