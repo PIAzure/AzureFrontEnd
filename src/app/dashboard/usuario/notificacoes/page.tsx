@@ -35,6 +35,7 @@ export default function Page() {
                     // Converta o texto para JSON somente se for válido
                     try {
                         const jsonData = JSON.parse(data);
+                        console.log(jsonData,'data')
                         setData(jsonData);
                     } catch (error) {
                         console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
@@ -204,7 +205,7 @@ export default function Page() {
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
-                        {
+                        {/* {
                             data.lenght > 0 ?
                                 <div>
                                     {
@@ -215,7 +216,7 @@ export default function Page() {
                                         })
                                     }
                                 </div> : null
-                        }
+                        } */}
                     </div>
                 </section>
             </div>
