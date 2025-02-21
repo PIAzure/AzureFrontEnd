@@ -30,14 +30,14 @@ export default function Page() {
 
         const fetchEventDetails = async () => {
             try {
-                const responseEvents = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/');
+                const responseEvents = await fetch('http://127.0.0.1:8000/events/admin/all/');
                 const eventsData = await responseEvents.json();
     
                 const userEmail = userData?.email;
     
                 const updatedEvents = await Promise.all(
                     eventsData.map(async (event: any) => {
-                    const responseScale = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${event.id}/`);
+                    const responseScale = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
                     const scaleData = await responseScale.json();
                     
                     const organizerName = await fetchOrganizerName(event.organizator);
@@ -72,7 +72,7 @@ export default function Page() {
 
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -93,7 +93,7 @@ export default function Page() {
 
     const handleWaitingList = async (eventId: number) => {
         try {
-            const response = await fetch(`${baseUrl}/participant/wait/${eventId}/`, {
+            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -177,9 +177,6 @@ export default function Page() {
             console.error('Erro ao cancelar inscrição:', error instanceof Error ? error.message : error);
         }
     };
-    
-
-    
 
     const openModal = (horarios: any[]) => {
         setHorarios(horarios);
@@ -262,7 +259,7 @@ export default function Page() {
                     <div className="border-t text-white border-white bg-cian">
                         <div className="px-1 mt-2">
                             <ul className="space-y-4">
-                                <li>
+                            <li>
                                     <Link
                                         href="/dashboard/usuario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
@@ -316,8 +313,25 @@ export default function Page() {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
                                         </svg>
-
                                         <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>

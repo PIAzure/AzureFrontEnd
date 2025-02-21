@@ -21,7 +21,7 @@ export default function Page() {
             setUser({ name: userObj.name, email: userObj.email })
 
 
-            fetch(`${url}/follow/notifys/${userObj.email}/`, {
+            fetch(`http://127.0.0.1:8000/follow/notifys/${userObj.email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -35,8 +35,8 @@ export default function Page() {
                     // Converta o texto para JSON somente se for válido
                     try {
                         const jsonData = JSON.parse(data);
-                        console.log(jsonData,'data')
                         setData(jsonData);
+                        console.log(jsonData[0],'data')
                     } catch (error) {
                         console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
                     }
@@ -45,8 +45,8 @@ export default function Page() {
         }
     }, [popUpDelete, updateCadastro]);
     useEffect(()=>{
-        console.log(data,'data change')
-    },data)
+        console.log(data)
+    },[data])
 
     return (
         <div className="flex h-screen border border-white">
@@ -70,7 +70,7 @@ export default function Page() {
                             </svg>
                         </div>
                     </Link>
-                    <h1 className="text-lg font-semibold items-center">Convites Recebidos</h1>
+                    <h1 className="text-lg font-semibold items-center">Suas notificações</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -130,15 +130,6 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard/usuario/favoritos"
-                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
-                                    >
-                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
-                                        <span className="text-sm">Favoritos</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
                                         href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
@@ -159,6 +150,35 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/lista_de_espera"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
+                                        </svg>
+                                        <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>
@@ -209,11 +229,11 @@ export default function Page() {
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
                         {
-                            data!=null ?
+                            data ?
                                 <div>
                                     {
                                         data.map((notify: any) => {
-                                            <div key={notify.id} className='shadow-2xl px-[20px] py-[20px]'>
+                                          return  <div key={notify.id} className='shadow-2xl px-[20px] py-[20px]'>
                                                 <h2 className='text-18px font-semibold mb-[20px] italic'>{notify.msg}</h2>
                                             </div>
                                         })

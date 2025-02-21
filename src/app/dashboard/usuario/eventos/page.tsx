@@ -38,7 +38,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -74,50 +74,56 @@ export default function Page() {
             alert('Não foi possível obter o email do usuário.');
             return;
         }
-    
+   
         try {
-            const checkResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
+            const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
                 throw new Error('Erro ao verificar inscrição do usuário.');
             }
-    
+   
             const checkData = await checkResponse.json();
-            
+           
             const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
             if (isAlreadyRegistered) {
                 console.log('Você já está inscrito nesse evento!');
                 alert('Você já está inscrito nesse evento!');
                 return;
             }
-
-            const checkEvents = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/`);
+   
+            const checkEvents = await fetch(`http://127.0.0.1:8000/events/admin/all/`);
             if (!checkEvents.ok) {
                 throw new Error('Erro ao verificar eventos do usuário.');
             }
             const dataEvents = await checkEvents.json();
-
+   
             const selectedEvent = dataEvents.find((event: any) => event.id === eventId);
             const selectedEventStartDate = selectedEvent.begin;
             const selectedEventEndDate = selectedEvent.end;
- 
+            const maxParticipants = selectedEvent.max_participants; // Verifica a quantidade de participantes máximos
+   
+            // Se o evento estiver cheio (max_participants === 0), inscreve automaticamente na lista de espera
+            if (maxParticipants === 0) {
+                console.log('O evento está cheio, você foi adicionado à lista de espera.');
+                alert('Parabéns, você entrou na lista de espera!');
+            }
+   
             const isConflicting = checkData.some((participant: any) => {
                 const participantEvent = participant.events;
                 const participantStartDate = participantEvent.begin;
                 const participantEndDate = participantEvent.end;
-                
+   
                 return (
-                   (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
+                    (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
                 );
             });
-
+   
             if (isConflicting) {
                 console.log('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 alert('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 return;
             }
-            
-    
-            const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant', {
+   
+            const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,23 +133,23 @@ export default function Page() {
                     event: eventId
                 }),
             });
-    
+   
             if (!response.ok) {
                 throw new Error(`Erro ao inscrever-se no evento: ${response.statusText}`);
             }
-    
+   
             console.log("Parabéns, Inscrição realizada com sucesso!");
-        alert('Inscrição realizada com sucesso!');
-    } catch (err: any) {
-        console.error("Erro na inscrição:", err.message || err);
-        alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
-    }
+            alert('Inscrição realizada com sucesso!');
+        } catch (err: any) {
+            console.error("Erro na inscrição:", err.message || err);
+        }
     };
+
     
     const fetchHorarios = async (eventId: number) => {
         try {
             setSelectedEventId(eventId); // Salva o eventId no estado
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventId}/`);
+            const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
             if (!response.ok) {
                 throw new Error('Erro ao buscar horários do evento.');
             }
@@ -219,7 +225,7 @@ export default function Page() {
             return;
         }
     
-        const eventsResponse = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/');
+        const eventsResponse = await fetch('http://127.0.0.1:8000/events/admin/all/');
         if (!eventsResponse.ok) {
             throw new Error('Erro ao buscar eventos.');
         }
@@ -227,7 +233,7 @@ export default function Page() {
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
     
-        const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
+        const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
         }
@@ -338,7 +344,7 @@ export default function Page() {
 
         let isAlreadyRegistered = false;
 
-        const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
+        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!scaleResponse.ok) {
             console.error('Erro ao buscar a escala do evento.');
             closeConfirmModal();
@@ -373,7 +379,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${event.id}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -406,7 +412,7 @@ export default function Page() {
             return;
         }
     
-        const url = `https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {
@@ -522,6 +528,35 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/lista_de_espera"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
+                                        </svg>
+                                        <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>

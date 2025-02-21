@@ -22,10 +22,13 @@ export default function Page() {
             const url = process.env.NEXT_PUBLIC_BE_URL;
             if (url) {
                 try {
-                    const response = await fetch(`${url}/follow/`, {
+                    const response = await fetch(`http://127.0.0.1:8000/follow/`, {
                         method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
                         body: JSON.stringify({
-                            "user": userObj.name,
+                            "user": userObj.email,
                             "organizator": organizador
                         })
                     });
@@ -36,6 +39,44 @@ export default function Page() {
 
                     const result = await response.json();
                     console.log('Event updated successfully:', result);
+                    if (window) {
+                        window.location.reload(); // Recarrega a página após seguir com sucesso
+                    }
+                    if (result.msg == 'error invite') {
+                        setError(true)
+                    }
+                    else {
+                        setFinish(true)
+                    }
+                } catch (error) {
+                    console.error('Error updating event:', error);
+                }
+            }
+        }
+    };
+    const unfollow = async (organizador: string) => {
+        const user: string | null = localStorage.getItem('user');
+        if (user) {
+            const userObj = JSON.parse(user);
+            const url = process.env.NEXT_PUBLIC_BE_URL;
+            if (url) {
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/follow/${userObj.email}/unfollow/${organizador}/`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update event: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Event updated successfully:', result);
+                    if (window) {
+                        window.location.reload(); // Recarrega a página após seguir com sucesso
+                    }
                     if (result.msg == 'error invite') {
                         setError(true)
                     }
@@ -57,7 +98,7 @@ export default function Page() {
             setUser({ name: userObj.name, email: userObj.email })
 
 
-            fetch(`${url}/organization/`, {
+            fetch(`http://127.0.0.1:8000/organization/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -72,13 +113,14 @@ export default function Page() {
                     try {
                         const jsonData = JSON.parse(data);
                         setData(jsonData);
+                        console.log(jsonData,  'empresas qaq')
                     } catch (error) {
                         console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
                     }
                 })
                 .catch((err) => console.error('Erro no fetch:', err));
 
-            fetch(`${url}/follow/${userObj.email}/`, {
+            fetch(`http://127.0.0.1:8000/follow/${userObj.email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -100,6 +142,10 @@ export default function Page() {
                 .catch((err) => console.error('Erro no fetch:', err));
         }
     }, [popUpDelete, updateCadastro]);
+
+    useEffect(()=>{
+        console.log(follow, data)
+    },[data,follow])
 
     return (
         <div className="flex h-screen border border-white">
@@ -123,7 +169,7 @@ export default function Page() {
                             </svg>
                         </div>
                     </Link>
-                    <h1 className="text-lg font-semibold items-center">Convites Recebidos</h1>
+                    <h1 className="text-lg font-semibold items-center">Siga os melhores organizadores</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -183,24 +229,6 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
-                                        href="/dashboard/usuario/favoritos"
-                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
-                                    >
-                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
-                                        <span className="text-sm">Favoritos</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href="/dashboard/usuario/notificacoes"
-                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
-                                    >
-                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
-                                        <span className="text-sm">Notificações</span>
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
                                         href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
@@ -221,6 +249,35 @@ export default function Page() {
                                         </svg>
 
                                         <span className="text-sm">Inscrições como participante</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/lista_de_espera"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
+                                        </svg>
+                                        <span className="text-sm">Lista de Espera</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
                                     </Link>
                                 </li>
                                 <li>
@@ -270,21 +327,26 @@ export default function Page() {
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
+                      <div>
                         {
+                            data?
+                            <div key={'sdfsdf'} className='flex flex-wrap gap-5'>
+                                  {
                             data.map((org: any) => {
+                                console.log(org)
                                 const organizadoresExistentes = new Set(follow.map((fo: any) => fo.organizator));
                                 return (
-                                    <div key={org.name} className='p-[20px] rounded-lg bg-blue text-white max-w-[300px] text-center'>
+                                    <div key={org.name} className='p-[20px] w-[300px] text-center rounded-lg bg-blue text-white max-w-[300px] text-center'>
                                         <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
-                                            <Image src={`${url}${org?.imagefield}`} fill alt='' />
+                                            <Image src={`http://127.0.0.1:8000/${org?.users.imagefield}`} fill alt='' />
                                         </div>
-                                        <h2 className='font-semibold mb-[12px]'>{org.name}</h2>
-                                        <div className='flex gap-3'>
+                                        <h2 className='font-semibold mb-[12px]'>{org.users.name}</h2>
+                                        <div className='flex gap-3 justify-center'>
                                             {
-                                                !organizadoresExistentes.has(org.email) ?
-                                                    <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                                !organizadoresExistentes.has(org.users.email) ?
+                                                    <button onClick={()=>{followOrg(org.users.email)}} className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
                                                         Seguir +
-                                                    </button> : <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                                    </button > : <button onClick={()=>{unfollow(org.users.email)}} className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
                                                         Parar de seguir
                                                     </button>
                                             }
@@ -294,6 +356,9 @@ export default function Page() {
 
                             })
                         }
+                            </div>:null
+                        }
+                      </div>
                     </div>
                 </section>
             </div>
