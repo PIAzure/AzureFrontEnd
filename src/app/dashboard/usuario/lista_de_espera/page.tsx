@@ -6,100 +6,50 @@ import Link from 'next/link';
 
 export default function Page() {
      const [userData, setUserData] = useState<any>(null);
-    const [events, setEvents] = useState<any[]>([]);
-    const [waitingPositions, setWaitingPositions] = useState<{ [eventId: number]: number | null }>({});
+     const [userEvents, setUserEvents] = useState<{ eventId: number; description: string; position: number }[]>([]);
+
     const router = useRouter();
     
-        useEffect(() => {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                router.push('/auth/usuario');
-                return;
-            }
-    
-            const storedUserData = localStorage.getItem('user');
-            if (storedUserData) {
-                setUserData(JSON.parse(storedUserData));
-            }
-    
-            if (storedUserData) {
-                const userEmail = JSON.parse(storedUserData).email;
-    
-                // Step 1: Fetch all events the user is participating in
-            const fetchEvents = async () => {
-                try {
-                    const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
-                    const data = await response.json();
+    useEffect(() => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            router.push('/auth/usuario');
+            return;
+        }
 
-                    if (Array.isArray(data) && data.length > 0) {
-                        const eventsOrganizerNames = await Promise.all(
-                            data.map(async (eventItem) => {
-                                const organizerName = await fetchOrganizerName(eventItem.events.organizator);
-                                return {
-                                    ...eventItem,
-                                    organizer: organizerName || 'Desconhecido',
-                                };
-                            })
-                        );
-
-                        setEvents(eventsOrganizerNames);
-                    } else {
-                        console.warn("Nenhum evento encontrado.");
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar os eventos:", error);
-                }
-            };
-
-            fetchEvents();
+        const storedUserData = localStorage.getItem('user');
+        if (storedUserData) {
+            const parsedUserData = JSON.parse(storedUserData);
+            setUserData(parsedUserData);
+            fetchEvents(parsedUserData.email);
         }
     }, [router]);
 
-     // Step 2: Fetch organizer name
-     const fetchOrganizerName = async (organizerEmail: string) => {
+    const fetchEvents = async (userEmail: string) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await fetch('http://127.0.0.1:8000/events/admin/all/');
+            const events = await response.json();
 
-            if (!response.ok) {
-                throw new Error('Erro ao buscar nome do organizador');
-            }
+            const userEventList: { eventId: number; description: string; position: number }[] = [];
 
-            const data = await response.json();
-            return data.users?.name || 'Desconhecido';
+            await Promise.all(
+                events.map(async (event: any) => {
+                    const eventId = event.id;
+                    const eventDescription = event.description; // Pegando o nome do evento
+                    const waitlistResponse = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`);
+                    const waitlist = await waitlistResponse.json();
+
+                    const userEntry = waitlist.find((entry: any) => entry.user === userEmail);
+                    if (userEntry) {
+                        const position = waitlist.findIndex((entry: any) => entry.id === userEntry.id) + 1;
+                        userEventList.push({ eventId, description: eventDescription, position });
+                    }
+                })
+            );
+
+            setUserEvents(userEventList); 
         } catch (error) {
-            console.error('Erro ao buscar nome do organizador', error);
-            return 'Desconhecido';
-        }
-    };
-
-     // Step 3: Fetch waiting position for each event
-     const fetchWaitingPosition = async (eventId: number) => {
-        const userEmail = userData?.email;
-        if (userEmail) {
-            try {
-                const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`);
-                const data = await response.json();
-                if (data.some((participant: any) => participant.email === userEmail)) {
-                    // Find the user's position in the waiting list
-                    const position = data.findIndex((participant: any) => participant.email === userEmail) + 1;
-                    setWaitingPositions(prevState => ({
-                        ...prevState,
-                        [eventId]: position
-                    }));
-                } else {
-                    setWaitingPositions(prevState => ({
-                        ...prevState,
-                        [eventId]: null
-                    }));
-                }
-            } catch (error) {
-                console.error('Erro ao buscar posição na lista de espera:', error);
-            }
+            console.error('Erro ao buscar eventos:', error);
         }
     };
 
@@ -265,24 +215,22 @@ export default function Page() {
 
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <div className="p-6">
-                {events.length > 0 ? (
-                events.map((event: any, index: number) => (
+                {userEvents.length > 0 ? (
+                userEvents.map(({ eventId, description, position }) => (
                     <article
-                        key={index}
+                        key={eventId}
                         className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
                     >
-                        <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
+                        <div className="rounded-[10px] bg-white p-1 sm:p-2 flex flex-col sm:flex-row justify-between h-full">
                             <div className="flex-1 pr-4 text-sm text-gray-600">
                                 <h2 className="text-sm sm:text-lg font-semibold mb-1">
-                                    <p><strong>Lista de Espera Referente ao Participante</strong></p>
+                                    <p><strong>Lista de Espera do Participante</strong></p>
                                 </h2>
                                 <br />
-                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
-                                    <p><strong>Evento:</strong> {event.events.description}</p>
-                                </h2>
-                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
-                                    <p><strong>Posição na Lista:</strong> {waitingPositions[event.events.id] ? waitingPositions[event.events.id] : 'Não está na lista de espera'}</p>
-                                </h2>
+                                <p><strong>Evento:</strong> {description}</p>
+                                <br />
+                                <p><strong>Posição na Lista de Espera:</strong> {position}</p>
+                                <br />
                             </div>
                         </div>
                     </article>
