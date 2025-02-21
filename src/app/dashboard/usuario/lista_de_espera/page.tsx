@@ -4,36 +4,128 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-
 export default function Page() {
-    const [userData, setUserData] = useState<any>(null);
+     const [userData, setUserData] = useState<any>(null);
+    const [events, setEvents] = useState<any[]>([]);
+    const [waitingPositions, setWaitingPositions] = useState<{ [eventId: number]: number | null }>({});
     const router = useRouter();
+    
+        useEffect(() => {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                router.push('/auth/usuario');
+                return;
+            }
+    
+            const storedUserData = localStorage.getItem('user');
+            if (storedUserData) {
+                setUserData(JSON.parse(storedUserData));
+            }
+    
+            if (storedUserData) {
+                const userEmail = JSON.parse(storedUserData).email;
+    
+                // Step 1: Fetch all events the user is participating in
+            const fetchEvents = async () => {
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
+                    const data = await response.json();
 
-    useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            router.push('/auth/usuario');
-            return;
+                    if (Array.isArray(data) && data.length > 0) {
+                        const eventsOrganizerNames = await Promise.all(
+                            data.map(async (eventItem) => {
+                                const organizerName = await fetchOrganizerName(eventItem.events.organizator);
+                                return {
+                                    ...eventItem,
+                                    organizer: organizerName || 'Desconhecido',
+                                };
+                            })
+                        );
+
+                        setEvents(eventsOrganizerNames);
+                    } else {
+                        console.warn("Nenhum evento encontrado.");
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar os eventos:", error);
+                }
+            };
+
+            fetchEvents();
         }
-
-        const storedUserData = localStorage.getItem('user');
-        if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
-        }
-
     }, [router]);
 
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        router.push('/auth/usuario');
+     // Step 2: Fetch organizer name
+     const fetchOrganizerName = async (organizerEmail: string) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao buscar nome do organizador');
+            }
+
+            const data = await response.json();
+            return data.users?.name || 'Desconhecido';
+        } catch (error) {
+            console.error('Erro ao buscar nome do organizador', error);
+            return 'Desconhecido';
+        }
+    };
+
+     // Step 3: Fetch waiting position for each event
+     const fetchWaitingPosition = async (eventId: number) => {
+        const userEmail = userData?.email;
+        if (userEmail) {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`);
+                const data = await response.json();
+                if (data.some((participant: any) => participant.email === userEmail)) {
+                    // Find the user's position in the waiting list
+                    const position = data.findIndex((participant: any) => participant.email === userEmail) + 1;
+                    setWaitingPositions(prevState => ({
+                        ...prevState,
+                        [eventId]: position
+                    }));
+                } else {
+                    setWaitingPositions(prevState => ({
+                        ...prevState,
+                        [eventId]: null
+                    }));
+                }
+            } catch (error) {
+                console.error('Erro ao buscar posição na lista de espera:', error);
+            }
+        }
     };
 
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                    <h1 className="text-lg font-semibold items-center">Página Inicial</h1>
+                <Link href="/dashboard/usuario" passHref>
+                        <div className="flex items-center space-x-2 cursor-pointer">
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth={1.5}
+                                stroke="currentColor"
+                                className="h-6 w-6"
+                            >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                            />
+                            </svg>
+                        </div>
+                    </Link>
+                    <h1 className="text-lg font-semibold items-center">Suas Inscrições na Lista de Espera</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -123,6 +215,7 @@ export default function Page() {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
                                         </svg>
+
                                         <span className="text-sm">Lista de Espera</span>
                                     </Link>
                                 </li>
@@ -168,47 +261,40 @@ export default function Page() {
                         </div>
                     </div>
                 </div>
-                <div className="sticky inset-x-0 bottom-0 border-t border-white p-2 text-red-500">
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="group relative flex w-full justify-center space-x-2 rounded-xl px-4 py-2"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 opacity-75"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                            />
-                        </svg>
-                        <span className="text-sm text-red-500">Sair</span>
-                    </button>
-                </div>
             </div>
 
-            <div className="flex-1 overflow-hidden" style={{ marginTop: '4rem' }}>
-                <section className="bg-light-gray text-white">
-                    <div className="mx-auto max-w-screen-xl px-4 py-32 lg:flex h-screen lg:items-center ">
-                        <div className="mx-auto max-w-3xl text-center h-64">
-                            <h1
-                                className="bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 bg-clip-text text-3xl font-extrabold text-transparent sm:text-5xl"
-                            >
-                                Bem-vindo ao Azure!
-                            </h1>
-
-                            <p className="mx-auto mt-4 max-w-xl sm:text-xl text-black">
-                                Conecte-se a eventos incríveis, contribua como voluntário ou participe como convidado. Faça parte da nossa comunidade.
-                            </p>
+            <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
+                <div className="p-6">
+                {events.length > 0 ? (
+                events.map((event: any, index: number) => (
+                    <article
+                        key={index}
+                        className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
+                    >
+                        <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
+                            <div className="flex-1 pr-4 text-sm text-gray-600">
+                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                    <p><strong>Lista de Espera Referente ao Participante</strong></p>
+                                </h2>
+                                <br />
+                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                    <p><strong>Evento:</strong> {event.events.description}</p>
+                                </h2>
+                                <h2 className="text-sm sm:text-lg font-semibold mb-1">
+                                    <p><strong>Posição na Lista:</strong> {waitingPositions[event.events.id] ? waitingPositions[event.events.id] : 'Não está na lista de espera'}</p>
+                                </h2>
+                            </div>
                         </div>
-                    </div>
-                </section>
+                    </article>
+                ))
+            ) : (
+                <div className="flex justify-center items-start mt-64">
+                    <p>
+                        <strong>Você não está inscrito em nenhuma Lista de Espera.</strong>
+                    </p>
+                </div>
+            )}
+                </div>
             </div>
         </div>
     );
