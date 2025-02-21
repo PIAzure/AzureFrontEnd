@@ -39,13 +39,15 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
         formData.append('password', user.senha);
         formData.append('isadmin','false');        
         if (!user.foto.includes('/media/banners/')) {
+            console.log('Foi aqio')
             const file = dataURLtoFile(user.foto, 'profile-image.png');  // Transformando a imagem em arquivo
             formData.append('imagefield', file);  // Enviando o arquivo
         }
 
         if (user.foto.includes('/media/banners/')) {
             const imageUrl = `${url}${user.foto}`;
-    
+            console.log('Foi aqio2')
+
             try {
                 const response = await fetch(imageUrl); // Faz a requisição para a URL da imagem
                 if (!response.ok) {
@@ -76,10 +78,16 @@ export function PopUpUpdateProfile({ isOpen, user, previewSrc }: IProps) {
             }
     
             const result = await response.json();
-            console.log('Event updated successfully:', result);
-            localStorage.removeItem('user');
+            localStorage.setItem('organizator', JSON.stringify({
+                email: result.email,
+                imagefield: result.imagefield,
+                isactive: result.isactive,
+                isadmin: result.isadmin,
+                name: result.name,
+                password: result.password
+            }));
             localStorage.removeItem('authToken');
-            route.push('/auth/organizador')
+            // route.push('/auth/organizador')
             isOpen(); // Fechar o modal ou fazer algo após a atualização
     
         } catch (error) {
