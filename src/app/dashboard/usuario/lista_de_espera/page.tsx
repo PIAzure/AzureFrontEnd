@@ -5,12 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Page() {
-    const [userData, setUserData] = useState<any>(null);
-    const [events, setEvents] = useState<any[]>([]);
-    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
-    const router = useRouter();
+     const [userData, setUserData] = useState<any>(null);
+     const [userEvents, setUserEvents] = useState<{ eventId: number; description: string; position: number }[]>([]);
 
+    const router = useRouter();
+    
     useEffect(() => {
         const token = localStorage.getItem('authToken');
         if (!token) {
@@ -20,133 +19,39 @@ export default function Page() {
 
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
-            setUserData(JSON.parse(storedUserData));
-        }
-
-        if (storedUserData) {
-            const userEmail = JSON.parse(storedUserData).email;
-
-            const fetchEvents = async () => {
-                try {
-                    const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
-                    const data = await response.json();
-    
-                    if (Array.isArray(data) && data.length > 0) {
-                        const eventsOrganizerNames = await Promise.all(
-                            data.map(async (eventItem) => {
-                                const organizerName = await fetchOrganizerName(eventItem.events.organizator);
-                                return {
-                                    ...eventItem,
-                                    organizer: organizerName || 'Desconhecido',
-                                    eventId: eventItem.events.id,
-                                };
-                            })
-                        );
-    
-                        setEvents(eventsOrganizerNames);
-                    } else {
-                        console.warn("Nenhum evento encontrado.");
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar os eventos:", error);
-                }
-            };
-            
-            fetchEvents();
+            const parsedUserData = JSON.parse(storedUserData);
+            setUserData(parsedUserData);
+            fetchEvents(parsedUserData.email);
         }
     }, [router]);
 
-    
-    const fetchOrganizerName = async (organizerEmail: string) => {
+    const fetchEvents = async (userEmail: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
+            const response = await fetch('http://127.0.0.1:8000/events/admin/all/');
+            const events = await response.json();
 
-            if (!response.ok) {
-                throw new Error('Erro ao buscar nome do organizador');
-            }
+            const userEventList: { eventId: number; description: string; position: number }[] = [];
 
-            const data = await response.json();
-            return data.users?.name || 'Desconhecido';
+            await Promise.all(
+                events.map(async (event: any) => {
+                    const eventId = event.id;
+                    const eventDescription = event.description; // Pegando o nome do evento
+                    const waitlistResponse = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`);
+                    const waitlist = await waitlistResponse.json();
+
+                    const userEntry = waitlist.find((entry: any) => entry.user === userEmail);
+                    if (userEntry) {
+                        const position = waitlist.findIndex((entry: any) => entry.id === userEntry.id) + 1;
+                        userEventList.push({ eventId, description: eventDescription, position });
+                    }
+                })
+            );
+
+            setUserEvents(userEventList); 
         } catch (error) {
-            console.error('Erro ao buscar nome do organizador', error);
-            return 'Desconhecido';
+            console.error('Erro ao buscar eventos:', error);
         }
     };
-
-    const handleCancelRegistration = async (registrationId: number, selectedEventId: number) => {
-        try {
-            const event = events.find(event => event.id === registrationId);
-            if (!event) {
-                alert('Evento não encontrado!');
-                return;
-            }
-    
-            const eventId = event.eventId; 
-    
-            const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
-                method: 'DELETE',
-            });
-    
-            if (response.ok) {
-                alert('Inscrição cancelada com sucesso!');
-                setEvents(events.filter(event => event.id !== registrationId));
-    
-                await handleWaitingList(eventId);
-            } else {
-                alert('Erro ao cancelar a inscrição.');
-            }
-    
-            closeConfirmModal();
-        } catch (error) {
-            console.error("Erro ao cancelar a inscrição:", error);
-        }
-    };
-    
-    
-    const handleWaitingList = async (eventId: number) => {
-        try {
-            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Resposta da API:', data);
-                
-                if (Array.isArray(data) && data.length === 0) {
-                    alert('Não há usuários na lista de espera para este evento.');
-                } else {
-                    alert('Usuário da Lista de Espera inscrito no evento com sucesso!');
-                }
-            } else {
-                console.error('Erro na requisição:', response.statusText);
-                alert('Sem Usuários Disponíveis na Lista de Espera.');
-            }
-        } catch (error) {
-            console.error('Erro ao fazer a requisição para a lista de espera:', error);
-            alert('Ocorreu um erro ao tentar processar a inscrição.');
-        }
-    };
-    
-    
-    const openConfirmModal = (eventId: number) => {
-        setSelectedEventId(eventId);
-        setIsConfirmModalOpen(true);
-    };
-
-    const closeConfirmModal = () => {
-        setIsConfirmModalOpen(false);
-    };
-
-    const baseUrl = "http://127.0.0.1:8000";
 
     return (
         <div className="flex h-screen border border-white">
@@ -170,7 +75,7 @@ export default function Page() {
                             </svg>
                         </div>
                     </Link>
-                    <h1 className="text-lg font-semibold items-center">Suas Inscrições como Participante</h1>
+                    <h1 className="text-lg font-semibold items-center">Suas Inscrições na Lista de Espera</h1>
                     <div className="flex items-center space-x-4">
                         <div className="relative">
                             <div className="flex items-center space-x-3">
@@ -310,84 +215,34 @@ export default function Page() {
 
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <div className="p-6">
-                    {events.length > 0 ? (
-                    events.map((event: any, index: number) => (
-                        <article
-                            key={index}
-                            className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
-                        >
-                            <div className="rounded-[10px] bg-white p-4 sm:p-6 flex flex-col sm:flex-row justify-between h-full">
+                {userEvents.length > 0 ? (
+                userEvents.map(({ eventId, description, position }) => (
+                    <article
+                        key={eventId}
+                        className="hover:animate-background rounded-xl bg-gradient-to-r from-green-300 via-blue-500 to-purple-600 p-0.5 shadow-xl transition hover:bg-[length:400%_400%] hover:shadow-sm hover:[animation-duration:_4s] mb-4"
+                    >
+                        <div className="rounded-[10px] bg-white p-1 sm:p-2 flex flex-col sm:flex-row justify-between h-full">
                             <div className="flex-1 pr-4 text-sm text-gray-600">
                                 <h2 className="text-sm sm:text-lg font-semibold mb-1">
-                                    <p><strong>Evento:</strong></p>
+                                    <p><strong>Lista de Espera do Participante</strong></p>
                                 </h2>
-                                <h2 className="text-xs sm:text-sm font-semibold mb-1">
-                                    <strong>{event.events.description}</strong>
-                                </h2>
-                                <p><strong>Localização:</strong> {event.events.location}</p>
-                                <p>
-                                    <strong>Data de Início: </strong>
-                                    {new Date(event.events.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                    <strong> Horário: </strong>
-                                    {new Date(event.events.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                </p>
-                                <p>
-                                    <strong>Data de Término: </strong>
-                                    {new Date(event.events.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                    <strong> Horário: </strong>
-                                    {new Date(event.events.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })}
-                                </p>
                                 <br />
-                                <p><strong>Organizador do Evento:</strong> {event.organizer}</p>
-                            </div>
-                                <div className="mt-14">
-                                    <button
-                                        className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
-                                        onClick={() => openConfirmModal(event.id)}
-
-                                    >
-                                        <i className="fas fa-times mr-2"></i>
-                                        Cancelar Participação
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-                    ))
-                    ) : (
-                    <div className="flex justify-center items-start mt-64">
-                        <p>
-                        <strong>Você não está inscrito em nenhum evento.</strong>
-                        </p>
-                    </div>
-                    )}
-                </div>
-                {isConfirmModalOpen && (
-                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
-                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
-                            <p className="text-lg font-bold">Tem certeza que deseja cancelar a sua participação no evento?</p>
-                            <div className="flex justify-end mt-4 space-x-4">
-                                <button
-                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
-                                    onClick={closeConfirmModal}
-                                >
-                                    Não
-                                </button>
-                                <button
-                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
-                                    onClick={() => {
-                                        if (selectedEventId !== null) {
-                                            handleCancelRegistration(selectedEventId, selectedEventId);
-                                        } else {
-                                            alert('Por favor, selecione um horário e um voluntário.');
-                                        }
-                                    }}
-                                >
-                                    Sim
-                                </button>
+                                <p><strong>Evento:</strong> {description}</p>
+                                <br />
+                                <p><strong>Posição na Lista de Espera:</strong> {position}</p>
+                                <br />
                             </div>
                         </div>
-                    </div>
-                )}
+                    </article>
+                ))
+            ) : (
+                <div className="flex justify-center items-start mt-64">
+                    <p>
+                        <strong>Você não está inscrito em nenhuma Lista de Espera.</strong>
+                    </p>
+                </div>
+            )}
+                </div>
             </div>
         </div>
     );

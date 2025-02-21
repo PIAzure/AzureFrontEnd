@@ -17,6 +17,9 @@ export default function Page() {
     const [selectedHorary, setSelectedHorary] = useState<number | null>(null);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
+
+    const [isModalOpenWait, setIsModalOpenWait] = useState(false);
+    const [isConfirmModalOpenWait, setIsConfirmModalOpenWait] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -165,9 +168,24 @@ export default function Page() {
         setIsModalOpen(false);
     };
 
+    const closeModalWait = () => {
+        setSelectedEvent(null);
+        setHorarios([]);
+        setIsModalOpenWait(false);
+    };
+
     const openConfirmModal = (horaryId: number) => {
         setSelectedHorary(horaryId);
         setIsConfirmModalOpen(true);
+    };
+
+    const openConfirmModalWait = (horaryId: number) => {
+        setSelectedHorary(horaryId);
+        setIsConfirmModalOpenWait(true);
+    };
+
+    const closeConfirmModalWait = () => {
+        setIsConfirmModalOpenWait(false);
     };
 
     const closeConfirmModal = () => {
@@ -228,6 +246,95 @@ export default function Page() {
         const selectedDatetime = horary.datetime;
         console.log("Datetime do Horário Selecionado:", selectedDatetime);
         
+         // Verifique se há vagas restantes (max_voluntary_scale)
+         if (horary.max_voluntary_scale === 0) {
+            let isAlreadyRegistered = false;
+        
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+            if (!scaleResponse.ok) {
+                console.error('Erro ao buscar a escala do evento.');
+                closeConfirmModalWait();
+                closeModal();
+                return;
+            }
+        
+            const scaleData = await scaleResponse.json();
+            console.log("Dados da Escala:", scaleData);
+        
+            for (const horary of scaleData[0]?.horarys || []) {
+                if (horary.id === horaryId) {
+                    console.log("Horário encontrado:", horary);
+        
+                    const userInVoluntarys = horary.voluntarys.some(
+                        (voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail
+                    );
+        
+                    if (userInVoluntarys) {
+                        console.log('Você já está inscrito nesse horário!');
+                        alert('Você já está inscrito nesse horário!');
+                        isAlreadyRegistered = true;
+                        
+                        break;
+                    }
+                }
+            }
+        
+            if (isAlreadyRegistered) {
+                closeConfirmModalWait();
+                return;
+            }
+        
+            alert('Parabéns, você está na fila de espera!');
+
+
+        let hasConflict = false;
+        for (const event of events) {
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            if (!scaleResponse.ok) {
+                continue;
+            }
+    
+            const scaleData = await scaleResponse.json();
+            
+            for (const horaryItem of scaleData[0]?.horarys) {
+                const userInVoluntarys = horaryItem.voluntarys.some((voluntary: { user: { email: any; }; }) => voluntary.user.email === userEmail);
+    
+                if (userInVoluntarys) {
+                    const eventStart = horaryItem.datetime;
+                    const selectedStart = selectedDatetime;
+                    console.log("Horario verificar:", eventStart);
+                    console.log("Horário selecionado para inscrição:", selectedStart);
+                    if (selectedStart == eventStart) {
+                        alert('Você já está inscrito em outro horário que conflita com o horário selecionado. Por favor, escolha um horário diferente.');
+                        hasConflict = true;
+                        break;
+                    }
+                }
+            }
+    
+            if (hasConflict) {
+                break;
+            }
+        }
+    
+        if (hasConflict) {
+            closeConfirmModalWait();
+            return;
+        }
+    
+        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        closeConfirmModalWait();
+        closeModal();
+
+       
+        return;
+    }
 
         let isAlreadyRegistered = false;
 
@@ -612,7 +719,13 @@ export default function Page() {
                                 </div>
                                 <button
                                     className="bg-blue text-white py-2 px-4 rounded hover:bg-blue-600"
-                                    onClick={() => openConfirmModal(horario.id)}
+                                    onClick={() => {
+                                        if (horario.max_voluntary_scale === 0) {
+                                            openConfirmModalWait(horario.id);
+                                        } else {
+                                            openConfirmModal(horario.id);
+                                        }
+                                    }}
                                 >
                                     Selecionar
                                 </button>
@@ -631,6 +744,28 @@ export default function Page() {
                                 <button
                                     className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
                                     onClick={closeConfirmModal}
+                                >
+                                    Não
+                                </button>
+                                <button
+                                    className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
+                                    onClick={handleConfirmRegistration}
+                                >
+                                    Sim
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isConfirmModalOpenWait && (
+                    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-60">
+                        <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+                            <p className="text-lg font-bold">O Evento está lotado. Deseja participar da Fila de Espera?</p>
+                            <div className="flex justify-end mt-4 space-x-4">
+                                <button
+                                    className="bg-red-500 text-white py-2 px-4 rounded hover:bg-gray-400"
+                                    onClick={closeConfirmModalWait}
                                 >
                                     Não
                                 </button>
