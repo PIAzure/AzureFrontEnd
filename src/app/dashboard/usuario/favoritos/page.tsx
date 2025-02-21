@@ -6,158 +6,49 @@ import Link from 'next/link';
 
 
 export default function Page() {
-    const [userData, setUserData] = useState<any>(null);
-    const [invites, setInvites] = useState<any[]>([]);
-    const [loading, setLoading] = useState(false);
-    const router = useRouter();
-
+    const [popUpDelete, setDelete] = useState(false)
+    const url = process.env.NEXT_PUBLIC_BE_URL;
+    const [updateCadastro, setUpdateCadastro] = useState(false);
+    const [view, setView] = useState(false);
+    const [data, setData] = useState<any>(null);
+    const [userData, setUser] = useState({ name: '',email:'' })
     useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            router.push('/auth/usuario');
-            return;
-        }
+        console.log('useEffect executado');
+        const user:string|null = localStorage.getItem('user');
+        if (user) {
+            const userObj = JSON.parse(user);
+            const email = userObj.email;
+            setUser({name:userObj.name,email:userObj.email})
 
-        const storedUserData = localStorage.getItem('user');
-        if (storedUserData) {
-            const parsedUser = JSON.parse(storedUserData);
-            setUserData(parsedUser);
-            fetchInvites(parsedUser.email);
-        }
-    
-    }, [router]);
 
-    const fetchInvites = async (email: string) => {
-        setLoading(true);
-        try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/${email}/`, {
-                method: 'GET',
+            fetch(`${url}/organization/`, {
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao buscar convites');
-            }
-
-            const data = await response.json();
-
-            const updatedInvites = await Promise.all(
-                data.map(async (invite: any) => {
-                    const eventDetails = await fetchEventDetails(invite.event);
-                    if (eventDetails) {
-                        const organizerName = await fetchOrganizerName(eventDetails.organizator);
-                        return {
-                            ...invite,
-                            eventDetails: {
-                                ...eventDetails,
-                                data,
-                                organizer: organizerName || 'Desconhecido',
-                                
-                            }
-                        };
-                    } else {
-                        return { ...invite, eventDetails: null };
+            })
+                .then((response) => {
+                    console.log('Resposta bruta:', response);
+                    return response.text(); // Alterado para text() para inspecionar o conteúdo
+                })
+                .then((data) => {
+                    console.log('Resposta do servidor:', data);
+                    // Converta o texto para JSON somente se for válido
+                    try {
+                        const jsonData = JSON.parse(data);
+                        setData(jsonData);
+                    } catch (error) {
+                        console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
                     }
                 })
-            );
-            setInvites(updatedInvites);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
+                .catch((err) => console.error('Erro no fetch:', err));
         }
-    };
+    }, [popUpDelete, updateCadastro]);
 
-    const fetchEventDetails = async (event: string) => {
-        try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/event/${event}/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao buscar detalhes do evento');
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error(`Erro ao buscar detalhes do evento`, error);
-            return null;
-        }
-    };
-
-    const fetchOrganizerName = async (organizerEmail: string) => {
-        try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error('Erro ao buscar nome do organizador');
-            }
-
-            const data = await response.json();
-            return data.users?.name || 'Desconhecido';
-        } catch (error) {
-            console.error('Erro ao buscar nome do organizador', error);
-            return 'Desconhecido';
-        }
-    };
-
-    const handleAccept = async (inviteId: string) => {
-        try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/acept/${inviteId}/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (!response.ok) {
-                throw new Error('Erro ao aceitar o convite');
-            }
-    
-            console.log(`Convite ${inviteId} aceito!`);
-            
-            setInvites(prevInvites => prevInvites.filter(invite => invite.id !== inviteId));
-            
-        } catch (error) {
-            console.error(`Erro ao aceitar o convite ${inviteId}`, error);
-        }
-    };
-
-    const handleReject = async (inviteId: string) => {
-        try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/acept/${inviteId}/`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-    
-            if (!response.ok) {
-                throw new Error('Erro ao recusar o convite');
-            }
-    
-            setInvites((prevInvites) => prevInvites.filter((invite) => invite.id !== inviteId));
-            console.log(`Convite ${inviteId} recusado!`);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-    
     return (
         <div className="flex h-screen border border-white">
             <div className="absolute top-0 left-64 right-0 z-10 border border-white h-16">
                 <section className="relative flex justify-between items-center p-4 bg-cian text-white h-full">
-                <Link href="/dashboard/usuario" passHref>
+                    <Link href="/dashboard/usuario" passHref>
                         <div className="flex items-center space-x-2 cursor-pointer">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -167,11 +58,11 @@ export default function Page() {
                                 stroke="currentColor"
                                 className="h-6 w-6"
                             >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
-                            />
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"
+                                />
                             </svg>
                         </div>
                     </Link>
@@ -182,9 +73,9 @@ export default function Page() {
                                 <div className="w-12 h-12 rounded-full overflow-hidden border border-white">
                                     <Image
                                         src='/images/usuario1.png'
-                                        alt= "Foto do Usuário"
-                                        width= {48}
-                                        height= {48}
+                                        alt="Foto do Usuário"
+                                        width={48}
+                                        height={48}
                                     />
                                 </div>
                                 <div>
@@ -235,6 +126,15 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
@@ -263,7 +163,7 @@ export default function Page() {
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 7.5v9a2.25 2.25 0 01-2.25 2.25H4.5A2.25 2.25 0 012.25 16.5v-9m19.5 0a2.25 2.25 0 00-2.25-2.25H4.5A2.25 2.25 0 002.25 7.5m19.5 0L12 13.5 2.25 7.5" />
                                         </svg>
                                         <span className="text-sm">Convites</span>
                                     </Link>
@@ -302,76 +202,24 @@ export default function Page() {
             </div>
 
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
-                <div className="p-6 overflow-y-auto">
-                        {loading ? (
-                            <p>Carregando convites...</p>
-                        ) : invites.length > 0 ? (
-                            invites.map((invite) => (
-                                
-                                <article
-                                    key={invite.id}
-                                    className="mb-4 p-4 rounded-lg shadow-md border bg-gray-100"
-                                >
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <h2 className="text-sm sm:text-lg font-semibold mb-1">
-                                                <p><strong>Evento:</strong></p>
-                                            </h2>
-                                            <p className="text-xs sm:text-sm font-semibold mb-1">
-                                            <strong>{invite.eventDetails?.description || 'Sem Descrição'}</strong>
-                                            </p>
-                                            <p className="text-sm text-gray-600">
-                                                <strong>Localização:</strong> {invite.eventDetails?.location || 'Sem Localização'}
-                                            </p>
-                                            <p>
-                                            <strong>Data de Início:</strong> 
-                                            {new Date(invite.eventDetails?.begin).toLocaleDateString('pt-BR', { timeZone: 'UTC' })} 
-                                                <strong> Horário: </strong>
-                                                {new Date(invite.eventDetails?.begin).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
-                                            </p>
-                                            <p >
-                                                <strong>Data de Término: </strong>
-                                                {new Date(invite.eventDetails?.end).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
-                                                <strong> Horário: </strong>
-                                                {new Date(invite.eventDetails?.end).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC'})}
-                                            </p>
-                                            <p className="mt-2 text-xs sm:text-sm">
-                                                <strong>Convite enviado pelo organizador:</strong> {invite.eventDetails?.organizer || 'Desconhecido'}
-                                            </p>
-                                        </div>
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => handleAccept(invite.id)}
-                                                className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                                            >
-                                                Aceitar
-                                            </button>
-                                            <button
-                                                onClick={() => handleReject(invite.id)}
-                                                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                                            >
-                                                Recusar
-                                            </button>
-                                        </div>
-                                    </div>
-                                </article>
-                            ))
-                        ) : (
-                            <div
-                                className="flex-1 bg-white text-black"
-                                style={{
-                                    marginTop: '-5rem',
-                                    overflow: 'auto',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100vh',
-                                }}
-                                >
-                                <strong><p>Você não tem convites disponíveis.</p></strong>
+                <section className='py-pyMob md:py-pyDesk'>
+                    <div className='max-w-padrao mx-auto px-padrao'>
+                        <div className='p-[20px] rounded-lg bg-blue text-white max-w-[300px] text-center'>
+                            <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
+                                <Image src={''} fill alt='' />
                             </div>
-                        )}
-                    </div>              
+                            <h2 className='font-semibold mb-[12px]'>Empresa X</h2>
+                            <div className='flex gap-3'>
+                                <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                    Seguir +
+                                </button>
+                                <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                    Parar de seguir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     );

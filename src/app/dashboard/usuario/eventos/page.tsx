@@ -35,7 +35,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
+                const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -73,7 +73,7 @@ export default function Page() {
         }
     
         try {
-            const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
+            const checkResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
                 throw new Error('Erro ao verificar inscrição do usuário.');
             }
@@ -87,7 +87,7 @@ export default function Page() {
                 return;
             }
 
-            const checkEvents = await fetch(`http://127.0.0.1:8000/events/admin/all/`);
+            const checkEvents = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/`);
             if (!checkEvents.ok) {
                 throw new Error('Erro ao verificar eventos do usuário.');
             }
@@ -114,7 +114,7 @@ export default function Page() {
             }
             
     
-            const response = await fetch('http://127.0.0.1:8000/participant', {
+            const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export default function Page() {
     const fetchHorarios = async (eventId: number) => {
         try {
             setSelectedEventId(eventId); // Salva o eventId no estado
-            const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
+            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventId}/`);
             if (!response.ok) {
                 throw new Error('Erro ao buscar horários do evento.');
             }
@@ -201,7 +201,7 @@ export default function Page() {
             return;
         }
     
-        const eventsResponse = await fetch('http://127.0.0.1:8000/events/admin/all/');
+        const eventsResponse = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/');
         if (!eventsResponse.ok) {
             throw new Error('Erro ao buscar eventos.');
         }
@@ -209,7 +209,7 @@ export default function Page() {
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
     
-        const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+        const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
         }
@@ -231,7 +231,7 @@ export default function Page() {
 
         let isAlreadyRegistered = false;
 
-        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+        const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${eventID}/`);
         if (!scaleResponse.ok) {
             console.error('Erro ao buscar a escala do evento.');
             closeConfirmModal();
@@ -266,7 +266,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            const scaleResponse = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -299,7 +299,7 @@ export default function Page() {
             return;
         }
     
-        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {

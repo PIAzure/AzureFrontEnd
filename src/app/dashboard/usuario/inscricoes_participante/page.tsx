@@ -28,7 +28,7 @@ export default function Page() {
 
             const fetchEvents = async () => {
                 try {
-                    const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
+                    const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/event/${userEmail}/`);
                     const data = await response.json();
     
                     if (Array.isArray(data) && data.length > 0) {
@@ -58,7 +58,7 @@ export default function Page() {
     
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
+            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export default function Page() {
 
     const handleCancelRegistration = async (registrationId: number) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
+            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/participant/${registrationId}/delete`, {
                 method: 'DELETE',
             });
     

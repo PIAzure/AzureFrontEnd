@@ -30,14 +30,14 @@ export default function Page() {
 
         const fetchEventDetails = async () => {
             try {
-                const responseEvents = await fetch('http://127.0.0.1:8000/events/admin/all/');
+                const responseEvents = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/admin/all/');
                 const eventsData = await responseEvents.json();
     
                 const userEmail = userData?.email;
     
                 const updatedEvents = await Promise.all(
                     eventsData.map(async (event: any) => {
-                    const responseScale = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+                    const responseScale = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${event.id}/`);
                     const scaleData = await responseScale.json();
                     
                     const organizerName = await fetchOrganizerName(event.organizator);
@@ -72,7 +72,7 @@ export default function Page() {
 
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
+            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export default function Page() {
         console.log("ID do Horário: ",horaryId);
         console.log("ID do Voluntário: ", voluntaryId);
             try {
-                const deleteUrl = `http://127.0.0.1:8000/scale/${horaryId}/delete/${voluntaryId}/`;
+                const deleteUrl = `https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/scale/${horaryId}/delete/${voluntaryId}/`;
         
                 const deleteResponse = await fetch(deleteUrl, {
                     method: 'DELETE',
