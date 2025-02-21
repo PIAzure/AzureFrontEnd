@@ -21,7 +21,7 @@ export default function Page() {
             setUser({ name: userObj.name, email: userObj.email })
 
 
-            fetch(`${url}/organization/`, {
+            fetch(`${url}/follow/notifys/${userObj.email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -204,14 +204,13 @@ export default function Page() {
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
-                        <div className='shadow-2xl px-[20px] py-[20px]'>
-                            <h2 className='text-18px font-semibold mb-[20px] italic'>Empresa x</h2>
-                            <h3 className='text-18px md:text-20px mb-[12px]'>Evento X</h3>
-                            <div className='flex gap-3'>
-                                <h3 className='border border-gray px-[15px] py-[5px] rounded-lg'>Local</h3>
-                                <h3 className='border border-gray px-[15px] py-[5px] rounded-lg'>Horário 12:00</h3>
-                            </div>
-                        </div>
+                        {
+                            data.map((notify: any) => {
+                                <div key={notify.id} className='shadow-2xl px-[20px] py-[20px]'>
+                                    <h2 className='text-18px font-semibold mb-[20px] italic'>{notify.msg}</h2>
+                                </div>
+                            })
+                        }
                     </div>
                 </section>
             </div>

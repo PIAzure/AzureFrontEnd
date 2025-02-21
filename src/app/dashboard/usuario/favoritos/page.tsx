@@ -11,14 +11,50 @@ export default function Page() {
     const [updateCadastro, setUpdateCadastro] = useState(false);
     const [view, setView] = useState(false);
     const [data, setData] = useState<any>(null);
-    const [userData, setUser] = useState({ name: '',email:'' })
+    const [follow, setFollow] = useState<any>(null);
+    const [userData, setUser] = useState({ name: '', email: '' })
+    const [error, setError] = useState(false);
+    const [finish, setFinish] = useState(false);
+    const followOrg = async (organizador: string) => {
+        const user: string | null = localStorage.getItem('user');
+        if (user) {
+            const userObj = JSON.parse(user);
+            const url = process.env.NEXT_PUBLIC_BE_URL;
+            if (url) {
+                try {
+                    const response = await fetch(`${url}/follow/`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            "user": userObj.name,
+                            "organizator": organizador
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Failed to update event: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('Event updated successfully:', result);
+                    if (result.msg == 'error invite') {
+                        setError(true)
+                    }
+                    else {
+                        setFinish(true)
+                    }
+                } catch (error) {
+                    console.error('Error updating event:', error);
+                }
+            }
+        }
+    };
     useEffect(() => {
         console.log('useEffect executado');
-        const user:string|null = localStorage.getItem('user');
+        const user: string | null = localStorage.getItem('user');
         if (user) {
             const userObj = JSON.parse(user);
             const email = userObj.email;
-            setUser({name:userObj.name,email:userObj.email})
+            setUser({ name: userObj.name, email: userObj.email })
 
 
             fetch(`${url}/organization/`, {
@@ -36,6 +72,27 @@ export default function Page() {
                     try {
                         const jsonData = JSON.parse(data);
                         setData(jsonData);
+                    } catch (error) {
+                        console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
+                    }
+                })
+                .catch((err) => console.error('Erro no fetch:', err));
+
+            fetch(`${url}/follow/${userObj.email}/`, {
+                headers: {
+                    'Accept': 'application/json',
+                },
+            })
+                .then((response) => {
+                    console.log('Resposta bruta:', response);
+                    return response.text(); // Alterado para text() para inspecionar o conteúdo
+                })
+                .then((data) => {
+                    console.log('Resposta do servidor:', data);
+                    // Converta o texto para JSON somente se for válido
+                    try {
+                        const jsonData = JSON.parse(data);
+                        setFollow(jsonData);
                     } catch (error) {
                         console.error('Erro ao parsear JSON:', error, 'Dados recebidos:', data);
                     }
@@ -135,6 +192,15 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/dashboard/usuario/inscricoes_voluntario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
                                     >
@@ -204,20 +270,30 @@ export default function Page() {
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <section className='py-pyMob md:py-pyDesk'>
                     <div className='max-w-padrao mx-auto px-padrao'>
-                        <div className='p-[20px] rounded-lg bg-blue text-white max-w-[300px] text-center'>
-                            <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
-                                <Image src={''} fill alt='' />
-                            </div>
-                            <h2 className='font-semibold mb-[12px]'>Empresa X</h2>
-                            <div className='flex gap-3'>
-                                <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
-                                    Seguir +
-                                </button>
-                                <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
-                                    Parar de seguir
-                                </button>
-                            </div>
-                        </div>
+                        {
+                            data.map((org: any) => {
+                                const organizadoresExistentes = new Set(follow.map((fo: any) => fo.organizator));
+                                return (
+                                    <div key={org.name} className='p-[20px] rounded-lg bg-blue text-white max-w-[300px] text-center'>
+                                        <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
+                                            <Image src={`${url}${org?.imagefield}`} fill alt='' />
+                                        </div>
+                                        <h2 className='font-semibold mb-[12px]'>{org.name}</h2>
+                                        <div className='flex gap-3'>
+                                            {
+                                                !organizadoresExistentes.has(org.email) ?
+                                                    <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                                        Seguir +
+                                                    </button> : <button className='bg-white text-blue px-[20px] py-[8px] rounded-full'>
+                                                        Parar de seguir
+                                                    </button>
+                                            }
+                                        </div>
+                                    </div>
+                                )
+
+                            })
+                        }
                     </div>
                 </section>
             </div>
