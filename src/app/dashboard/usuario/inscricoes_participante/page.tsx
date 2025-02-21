@@ -38,6 +38,7 @@ export default function Page() {
                                 return {
                                     ...eventItem,
                                     organizer: organizerName || 'Desconhecido',
+                                    eventId: eventItem.events.id,
                                 };
                             })
                         );
@@ -77,8 +78,16 @@ export default function Page() {
         }
     };
 
-    const handleCancelRegistration = async (registrationId: number) => {
+    const handleCancelRegistration = async (registrationId: number, selectedEventId: number) => {
         try {
+            const event = events.find(event => event.id === registrationId);
+            if (!event) {
+                alert('Evento não encontrado!');
+                return;
+            }
+    
+            const eventId = event.eventId; 
+    
             const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
                 method: 'DELETE',
             });
@@ -86,16 +95,48 @@ export default function Page() {
             if (response.ok) {
                 alert('Inscrição cancelada com sucesso!');
                 setEvents(events.filter(event => event.id !== registrationId));
+    
+                await handleWaitingList(eventId);
             } else {
                 alert('Erro ao cancelar a inscrição.');
             }
-
+    
             closeConfirmModal();
         } catch (error) {
             console.error("Erro ao cancelar a inscrição:", error);
         }
     };
-
+    
+    
+    const handleWaitingList = async (eventId: number) => {
+        try {
+            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+    
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Resposta da API:', data);
+                
+                if (Array.isArray(data) && data.length === 0) {
+                    alert('Não há usuários na lista de espera para este evento.');
+                } else {
+                    alert('Usuário da Lista de Espera inscrito no evento com sucesso!');
+                }
+            } else {
+                console.error('Erro na requisição:', response.statusText);
+                alert('Sem Usuários Disponíveis na Lista de Espera.');
+            }
+        } catch (error) {
+            console.error('Erro ao fazer a requisição para a lista de espera:', error);
+            alert('Ocorreu um erro ao tentar processar a inscrição.');
+        }
+    };
+    
+    
     const openConfirmModal = (eventId: number) => {
         setSelectedEventId(eventId);
         setIsConfirmModalOpen(true);
@@ -335,7 +376,7 @@ export default function Page() {
                                     className="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600"
                                     onClick={() => {
                                         if (selectedEventId !== null) {
-                                            handleCancelRegistration(selectedEventId);
+                                            handleCancelRegistration(selectedEventId, selectedEventId);
                                         } else {
                                             alert('Por favor, selecione um horário e um voluntário.');
                                         }
