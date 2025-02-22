@@ -26,7 +26,7 @@ export default function Page() {
         setIsSubmitting(true);
 
         try {
-            const response = await fetch('https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/users/auth/token/', {
+            const response = await fetch(' http://127.0.0.1:8000/users/auth/token/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -128,6 +128,24 @@ export default function Page() {
                                 </li>
                                 <li>
                                     <Link
+                                        href="/dashboard/usuario/favoritos"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/cora.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Favoritos</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/dashboard/usuario/notificacoes"
+                                        className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
+                                    >
+                                        <Image src={'/images/noti.png'} width={30} height={30} alt='' />
+                                        <span className="text-sm">Notificações</span>
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
                                         href="/dashboard/usuario/convites"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
                                     >
