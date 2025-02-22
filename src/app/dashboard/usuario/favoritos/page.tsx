@@ -338,6 +338,7 @@ export default function Page() {
                                 return (
                                     <div key={org.name} className='p-[20px] w-[300px] text-center rounded-lg bg-blue text-white max-w-[300px] text-center'>
                                         <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
+
                                             <Image src={`http://127.0.0.1:8000/${org?.users.imagefield}`} fill alt='' />
                                         </div>
                                         <h2 className='font-semibold mb-[12px]'>{org.users.name}</h2>

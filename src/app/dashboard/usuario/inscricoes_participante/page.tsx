@@ -119,7 +119,7 @@ export default function Page() {
    
     const handleWaitingList = async (eventId: number) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/participant/wait/${eventId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -137,7 +137,7 @@ export default function Page() {
                 }
             } else {
                 console.error('Erro na requisição:', response.statusText);
-                alert('Sem Usuários Disponíveis na Lista de Espera.');
+                // alert('Sem Usuários Disponíveis na Lista de Espera.');
             }
         } catch (error) {
             console.error('Erro ao fazer a requisição para a lista de espera:', error);
@@ -155,7 +155,6 @@ export default function Page() {
     const closeConfirmModal = () => {
         setIsConfirmModalOpen(false);
     };
-
 
     const baseUrl = "http://127.0.0.1:8000";
 

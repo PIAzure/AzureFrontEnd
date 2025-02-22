@@ -7,7 +7,13 @@ interface IProps{
 export function SideMenu({changeChild}:IProps) {
     const [isDashboard, setIsDashboard] = useState('Home');
     const [isOpen, setIsOpen] = useState(true);
-
+    const sair =()=>{
+        localStorage.removeItem('organizator');
+        localStorage.removeItem('authTokenOrganizator')
+        if (window) {
+            window.location.reload(); // Recarrega a página após seguir com sucesso
+        }
+    }
     return (
         <div className="flex">
             {/* Sidebar */}
@@ -36,6 +42,11 @@ export function SideMenu({changeChild}:IProps) {
                     <div onClick={()=>{changeChild('Configurações');setIsDashboard('Configurações')}} className={`py-[15px] text-center w-full ${isDashboard=='Configurações'?'bg-white text-middle-blue font-extrabold':''}`}>
                         <span>
                             Configurações
+                        </span>
+                    </div>
+                    <div onClick={()=>{sair()}} className={`py-[15px] text-center w-full hover:cursor-pointer ${isDashboard=='Configurações'?'':''}`}>
+                        <span>
+                            Sair
                         </span>
                     </div>
                 </div>

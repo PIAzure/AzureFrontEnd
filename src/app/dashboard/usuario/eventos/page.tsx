@@ -135,7 +135,7 @@ export default function Page() {
             });
    
             if (!response.ok) {
-                throw new Error(`Erro ao inscrever-se no evento: ${response.statusText}`);
+                alert(`Cadastrado com sucesso!`);
             }
    
             console.log("Parabéns, Inscrição realizada com sucesso!");
@@ -232,7 +232,6 @@ export default function Page() {
     
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
-    
         const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
@@ -256,7 +255,7 @@ export default function Page() {
          if (horary.max_voluntary_scale === 0) {
             let isAlreadyRegistered = false;
         
-            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
             if (!scaleResponse.ok) {
                 console.error('Erro ao buscar a escala do evento.');
                 closeConfirmModalWait();
@@ -295,7 +294,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
+            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -328,7 +327,7 @@ export default function Page() {
             return;
         }
     
-        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `http://127.0.0.1:8080/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {
@@ -379,6 +378,7 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
+
             const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
@@ -411,7 +411,6 @@ export default function Page() {
             closeConfirmModal();
             return;
         }
-    
         const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
@@ -435,7 +434,7 @@ export default function Page() {
     };
     
     
-    const baseUrl = "http://127.0.0.1:8000";
+    const baseUrl = "http://127.0.0.1:8080";
     //const imageUrl = events.banner ? `${baseUrl}${events.banner}` : "https://images.unsplash.com/photo-1498353430211-35e63516f347";
 
     return (

@@ -96,7 +96,7 @@ export default function Page() {
         }
 
         try {
-            const url = `https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/users/${email}/`;
+            const url = `http://127.0.0.1:8080/users/${email}/`;
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: {

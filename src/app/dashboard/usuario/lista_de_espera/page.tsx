@@ -27,7 +27,7 @@ export default function Page() {
 
     const fetchEvents = async (userEmail: string) => {
         try {
-            const response = await fetch('http://127.0.0.1:8000/events/admin/all/');
+            const response = await fetch('http://127.0.0.1:8080/events/admin/all/');
             const events = await response.json();
 
             const userEventList: { eventId: number; description: string; position: number }[] = [];
@@ -36,7 +36,7 @@ export default function Page() {
                 events.map(async (event: any) => {
                     const eventId = event.id;
                     const eventDescription = event.description; // Pegando o nome do evento
-                    const waitlistResponse = await fetch(`http://127.0.0.1:8000/participant/wait/${eventId}/`);
+                    const waitlistResponse = await fetch(`http://127.0.0.1:8080/participant/wait/${eventId}/`);
                     const waitlist = await waitlistResponse.json();
 
                     const userEntry = waitlist.find((entry: any) => entry.user === userEmail);

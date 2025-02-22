@@ -199,7 +199,7 @@ export default function Page() {
         openModal(horarios);
     };
 
-    const baseUrl = "http://127.0.0.1:8000";
+    const baseUrl = "http://127.0.0.1:8080";
 
     return (
         <div className="flex h-screen border border-white">

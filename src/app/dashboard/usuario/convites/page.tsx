@@ -30,7 +30,7 @@ export default function Page() {
     const fetchInvites = async (email: string) => {
         setLoading(true);
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/${email}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/invite/${email}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ export default function Page() {
 
     const fetchEventDetails = async (event: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/events/event/${event}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/events/event/${event}/`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ export default function Page() {
 
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/organization/${organizerEmail}`, {
+            const response = await fetch(`http://127.0.0.1:8080/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -113,7 +113,7 @@ export default function Page() {
 
     const handleAccept = async (inviteId: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/acept/${inviteId}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/invite/acept/${inviteId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ export default function Page() {
 
     const handleReject = async (inviteId: string) => {
         try {
-            const response = await fetch(`https://d6c7-2804-828-f231-4a76-bec-a9e-373a-2dd4.ngrok-free.app/invite/acept/${inviteId}/`, {
+            const response = await fetch(`http://127.0.0.1:8080/invite/acept/${inviteId}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

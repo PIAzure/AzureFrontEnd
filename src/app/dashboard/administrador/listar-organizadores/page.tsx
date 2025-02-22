@@ -42,6 +42,7 @@ export default function Page() {
     const fetchUsers = async () => {
         try {
             setLoading(true);
+
             const response = await fetch(' http://127.0.0.1:8000/organization/', {
                 method: 'GET',
                 headers: {
@@ -100,6 +101,7 @@ export default function Page() {
         }
     
         try {
+
             const response = await fetch(` http://127.0.0.1:8000/users/${selectedUser.email}/`, {
                 method: 'DELETE',
                 headers: {
