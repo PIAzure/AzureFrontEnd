@@ -22,7 +22,7 @@ export default function Page() {
             const url = process.env.NEXT_PUBLIC_BE_URL;
             if (url) {
                 try {
-                    const response = await fetch(`${url}/follow/`, {
+                    const response = await fetch(`http://127.0.0.1:8000/follow/`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -61,7 +61,7 @@ export default function Page() {
             const url = process.env.NEXT_PUBLIC_BE_URL;
             if (url) {
                 try {
-                    const response = await fetch(`${url}/follow/${userObj.email}/unfollow/${organizador}/`, {
+                    const response = await fetch(`http://127.0.0.1:8000/follow/${userObj.email}/unfollow/${organizador}/`, {
                         method: 'DELETE',
                         headers: {
                             'Content-Type': 'application/json'
@@ -98,7 +98,7 @@ export default function Page() {
             setUser({ name: userObj.name, email: userObj.email })
 
 
-            fetch(`${url}/organization/`, {
+            fetch(`http://127.0.0.1:8000/organization/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -120,7 +120,7 @@ export default function Page() {
                 })
                 .catch((err) => console.error('Erro no fetch:', err));
 
-            fetch(`${url}/follow/${userObj.email}/`, {
+            fetch(`http://127.0.0.1:8000/follow/${userObj.email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },
@@ -338,7 +338,8 @@ export default function Page() {
                                 return (
                                     <div key={org.name} className='p-[20px] w-[300px] text-center rounded-lg bg-blue text-white max-w-[300px] text-center'>
                                         <div className='relative mx-auto w-[50px] h-[50px] overflow-hidden rounded-lg mb-[12px]'>
-                                            <Image src={`${url}/${org?.users.imagefield}`} fill alt='' />
+
+                                            <Image src={`http://127.0.0.1:8000/${org?.users.imagefield}`} fill alt='' />
                                         </div>
                                         <h2 className='font-semibold mb-[12px]'>{org.users.name}</h2>
                                         <div className='flex gap-3 justify-center'>

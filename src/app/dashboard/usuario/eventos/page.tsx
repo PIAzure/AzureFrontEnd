@@ -38,7 +38,7 @@ export default function Page() {
         const fetchEventos = async () => {
             try {
                 setLoading(true);
-                const response = await fetch('http://127.0.0.1:8080/events/admin/all/', {
+                const response = await fetch('http://127.0.0.1:8000/events/admin/all/', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -74,50 +74,56 @@ export default function Page() {
             alert('Não foi possível obter o email do usuário.');
             return;
         }
-    
+   
         try {
-            const checkResponse = await fetch(`http://127.0.0.1:8080/participant/event/${userEmail}/`);
+            const checkResponse = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
             if (!checkResponse.ok) {
                 throw new Error('Erro ao verificar inscrição do usuário.');
             }
-    
+   
             const checkData = await checkResponse.json();
-            
+           
             const isAlreadyRegistered = checkData.some((participant: any) => participant.events.id === eventId);
             if (isAlreadyRegistered) {
                 console.log('Você já está inscrito nesse evento!');
                 alert('Você já está inscrito nesse evento!');
                 return;
             }
-
-            const checkEvents = await fetch(`http://127.0.0.1:8080/events/admin/all/`);
+   
+            const checkEvents = await fetch(`http://127.0.0.1:8000/events/admin/all/`);
             if (!checkEvents.ok) {
                 throw new Error('Erro ao verificar eventos do usuário.');
             }
             const dataEvents = await checkEvents.json();
-
+   
             const selectedEvent = dataEvents.find((event: any) => event.id === eventId);
             const selectedEventStartDate = selectedEvent.begin;
             const selectedEventEndDate = selectedEvent.end;
- 
+            const maxParticipants = selectedEvent.max_participants; // Verifica a quantidade de participantes máximos
+   
+            // Se o evento estiver cheio (max_participants === 0), inscreve automaticamente na lista de espera
+            if (maxParticipants === 0) {
+                console.log('O evento está cheio, você foi adicionado à lista de espera.');
+                alert('Parabéns, você entrou na lista de espera!');
+            }
+   
             const isConflicting = checkData.some((participant: any) => {
                 const participantEvent = participant.events;
                 const participantStartDate = participantEvent.begin;
                 const participantEndDate = participantEvent.end;
-                
+   
                 return (
-                   (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
+                    (selectedEventStartDate < participantEndDate && selectedEventEndDate > participantStartDate)
                 );
             });
-
+   
             if (isConflicting) {
                 console.log('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 alert('Não foi possível realizar a inscrição, pois o evento selecionado tem um horário que conflita com outro evento no qual você já está inscrito.');
                 return;
             }
-            
-    
-            const response = await fetch('http://127.0.0.1:8080/participant', {
+   
+            const response = await fetch('http://127.0.0.1:8000/participant', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -127,23 +133,23 @@ export default function Page() {
                     event: eventId
                 }),
             });
-    
+   
             if (!response.ok) {
                 alert(`Cadastrado com sucesso!`);
             }
-    
+   
             console.log("Parabéns, Inscrição realizada com sucesso!");
-        alert('Inscrição realizada com sucesso!');
-    } catch (err: any) {
-        console.error("Erro na inscrição:", err.message || err);
-        alert(`Ocorreu um erro: ${err.message || 'Tente novamente mais tarde.'}`);
-    }
+            alert('Inscrição realizada com sucesso!');
+        } catch (err: any) {
+            console.error("Erro na inscrição:", err.message || err);
+        }
     };
+
     
     const fetchHorarios = async (eventId: number) => {
         try {
             setSelectedEventId(eventId); // Salva o eventId no estado
-            const response = await fetch(`http://127.0.0.1:8080/scale/${eventId}/`);
+            const response = await fetch(`http://127.0.0.1:8000/scale/${eventId}/`);
             if (!response.ok) {
                 throw new Error('Erro ao buscar horários do evento.');
             }
@@ -219,15 +225,14 @@ export default function Page() {
             return;
         }
     
-        const eventsResponse = await fetch('http://127.0.0.1:8080/events/admin/all/');
+        const eventsResponse = await fetch('http://127.0.0.1:8000/events/admin/all/');
         if (!eventsResponse.ok) {
             throw new Error('Erro ao buscar eventos.');
         }
     
         const events = await eventsResponse.json();
         console.log('Eventos:', events);
-    
-        const response = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
+        const response = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!response.ok) {
             throw new Error('Erro ao buscar escala do evento.');
         }
@@ -338,7 +343,7 @@ export default function Page() {
 
         let isAlreadyRegistered = false;
 
-        const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${eventID}/`);
+        const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${eventID}/`);
         if (!scaleResponse.ok) {
             console.error('Erro ao buscar a escala do evento.');
             closeConfirmModal();
@@ -373,7 +378,8 @@ export default function Page() {
 
         let hasConflict = false;
         for (const event of events) {
-            const scaleResponse = await fetch(`http://127.0.0.1:8080/scale/${event.id}/`);
+
+            const scaleResponse = await fetch(`http://127.0.0.1:8000/scale/${event.id}/`);
             if (!scaleResponse.ok) {
                 continue;
             }
@@ -405,8 +411,7 @@ export default function Page() {
             closeConfirmModal();
             return;
         }
-    
-        const url = `http://127.0.0.1:8080/scale/${horaryId}/horary/${userEmail}/`;
+        const url = `http://127.0.0.1:8000/scale/${horaryId}/horary/${userEmail}/`;
         fetch(url, {
             method: 'POST',
             headers: {

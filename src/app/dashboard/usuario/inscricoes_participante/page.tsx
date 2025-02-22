@@ -4,12 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+
 export default function Page() {
     const [userData, setUserData] = useState<any>(null);
     const [events, setEvents] = useState<any[]>([]);
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
      const [selectedEventId, setSelectedEventId] = useState<number | null>(null);
     const router = useRouter();
+
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -18,19 +20,22 @@ export default function Page() {
             return;
         }
 
+
         const storedUserData = localStorage.getItem('user');
         if (storedUserData) {
             setUserData(JSON.parse(storedUserData));
         }
 
+
         if (storedUserData) {
             const userEmail = JSON.parse(storedUserData).email;
 
+
             const fetchEvents = async () => {
                 try {
-                    const response = await fetch(`http://127.0.0.1:8080/participant/event/${userEmail}/`);
+                    const response = await fetch(`http://127.0.0.1:8000/participant/event/${userEmail}/`);
                     const data = await response.json();
-    
+   
                     if (Array.isArray(data) && data.length > 0) {
                         const eventsOrganizerNames = await Promise.all(
                             data.map(async (eventItem) => {
@@ -42,7 +47,7 @@ export default function Page() {
                                 };
                             })
                         );
-    
+   
                         setEvents(eventsOrganizerNames);
                     } else {
                         console.warn("Nenhum evento encontrado.");
@@ -51,24 +56,27 @@ export default function Page() {
                     console.error("Erro ao buscar os eventos:", error);
                 }
             };
-            
+           
             fetchEvents();
         }
     }, [router]);
 
-    
+
+   
     const fetchOrganizerName = async (organizerEmail: string) => {
         try {
-            const response = await fetch(`http://127.0.0.1:8080/organization/${organizerEmail}`, {
+            const response = await fetch(`http://127.0.0.1:8000/organization/${organizerEmail}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                 },
             });
 
+
             if (!response.ok) {
                 throw new Error('Erro ao buscar nome do organizador');
             }
+
 
             const data = await response.json();
             return data.users?.name || 'Desconhecido';
@@ -78,6 +86,7 @@ export default function Page() {
         }
     };
 
+
     const handleCancelRegistration = async (registrationId: number, selectedEventId: number) => {
         try {
             const event = events.find(event => event.id === registrationId);
@@ -85,29 +94,29 @@ export default function Page() {
                 alert('Evento não encontrado!');
                 return;
             }
-    
-            const eventId = event.eventId; 
-    
-            const response = await fetch(`http://127.0.0.1:8080/participant/${registrationId}/delete`, {
+   
+            const eventId = event.eventId;
+   
+            const response = await fetch(`http://127.0.0.1:8000/participant/${registrationId}/delete`, {
                 method: 'DELETE',
             });
-    
+   
             if (response.ok) {
                 alert('Inscrição cancelada com sucesso!');
                 setEvents(events.filter(event => event.id !== registrationId));
-    
+   
                 await handleWaitingList(eventId);
             } else {
                 alert('Erro ao cancelar a inscrição.');
             }
-    
+   
             closeConfirmModal();
         } catch (error) {
             console.error("Erro ao cancelar a inscrição:", error);
         }
     };
-    
-    
+   
+   
     const handleWaitingList = async (eventId: number) => {
         try {
             const response = await fetch(`http://127.0.0.1:8080/participant/wait/${eventId}/`, {
@@ -116,11 +125,11 @@ export default function Page() {
                     'Content-Type': 'application/json',
                 },
             });
-    
+   
             if (response.ok) {
                 const data = await response.json();
                 console.log('Resposta da API:', data);
-                
+               
                 if (Array.isArray(data) && data.length === 0) {
                     alert('Não há usuários na lista de espera para este evento.');
                 } else {
@@ -135,18 +144,20 @@ export default function Page() {
             alert('Ocorreu um erro ao tentar processar a inscrição.');
         }
     };
-    
-    
+   
+   
     const openConfirmModal = (eventId: number) => {
         setSelectedEventId(eventId);
         setIsConfirmModalOpen(true);
     };
 
+
     const closeConfirmModal = () => {
         setIsConfirmModalOpen(false);
     };
 
-    const baseUrl = "http://127.0.0.1:8080";
+    const baseUrl = "http://127.0.0.1:8000";
+
 
     return (
         <div className="flex h-screen border border-white">
@@ -192,6 +203,7 @@ export default function Page() {
                 </section>
             </div>
 
+
             <div className="w-64 flex flex-col justify-between border border-white bg-cian">
                 <div className="flex flex-col items-left p-4 bg-cian border border-cian">
                     <div className="mb-7 mx-auto bg-light-gray p-4 rounded-lg">
@@ -206,7 +218,7 @@ export default function Page() {
                     <div className="border-t text-white border-white bg-cian">
                         <div className="px-1 mt-2">
                             <ul className="space-y-4">
-                                <li>
+                            <li>
                                     <Link
                                         href="/dashboard/usuario"
                                         className="group relative flex items-center space-x-2 rounded-xl px-4 py-2"
@@ -260,7 +272,6 @@ export default function Page() {
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" className="size-6">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12M6 21h12M8 3v2a6 6 0 0 0 4 5.659V13.34A6 6 0 0 0 8 19v2m8-18v2a6 6 0 0 1-4 5.659V13.34A6 6 0 0 1 16 19v2"/>
                                         </svg>
-
                                         <span className="text-sm">Lista de Espera</span>
                                     </Link>
                                 </li>
@@ -326,6 +337,7 @@ export default function Page() {
                 </div>
             </div>
 
+
             <div className="flex-1 bg-white text-black" style={{ marginTop: '4rem', overflow: 'auto' }}>
                 <div className="p-6">
                     {events.length > 0 ? (
@@ -362,6 +374,7 @@ export default function Page() {
                                     <button
                                         className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-700 transition-all border border-red flex items-center"
                                         onClick={() => openConfirmModal(event.id)}
+
 
                                     >
                                         <i className="fas fa-times mr-2"></i>

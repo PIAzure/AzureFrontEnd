@@ -21,7 +21,7 @@ export default function Page() {
             setUser({ name: userObj.name, email: userObj.email })
 
 
-            fetch(`${url}/follow/notifys/${userObj.email}/`, {
+            fetch(`http://127.0.0.1:8000/follow/notifys/${userObj.email}/`, {
                 headers: {
                     'Accept': 'application/json',
                 },

@@ -80,7 +80,7 @@ export default function Page() {
         }
 
         try {
-            const url = `http://127.0.0.1:8080/users/${email}/`;
+            const url = ` http://127.0.0.1:8000/users/${email}/`;
             const response = await fetch(url, {
                 method: 'PUT',
                 headers: {

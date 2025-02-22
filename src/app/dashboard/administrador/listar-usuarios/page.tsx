@@ -45,7 +45,7 @@ export default function Page() {
     const fetchUsers = async (token: string) => {
         try {
             setLoading(true);
-            const response = await fetch('http://127.0.0.1:8080/users/', {
+            const response = await fetch(' http://127.0.0.1:8000/users/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -100,7 +100,7 @@ export default function Page() {
         }
     
         try {
-            const response = await fetch(`http://127.0.0.1:8080/users/${selectedUser.email}/`, {
+            const response = await fetch(` http://127.0.0.1:8000/users/${selectedUser.email}/`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
